@@ -5,11 +5,11 @@
 ---
 
 ---
-##🧑‍💻 Автор
+## 🧑‍💻 Автор
 
-Автор: vanyadima
-Лицензия: MIT
-Контакт: isurodin@yandex.ru
+>Автор: vanyadima
+>Лицензия: MIT
+>Контакт: isurodin@yandex.ru
 ---
 ## 💬 Благодарности
 

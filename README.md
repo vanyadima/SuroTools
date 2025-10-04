@@ -6,6 +6,7 @@
 
 ---
 🧑‍💻 Автор
+
 Автор: vanyadima
 Лицензия: MIT
 Контакт: isurodin@yandex.ru

@@ -1,4 +1,7 @@
 # SuroTools
+> ⚙️ Проект находится на стадии активного развития.
+> В начале представлены базовые настройки и примеры, которые со временем будут дополнены и расширены.
+
 > Набор инструментов, конфигураций и документации для системных администраторов и инженеров Linux.  
 > Цель проекта — создать единое место для хранения и автоматизации всех необходимых решений для Linux.
 
@@ -21,16 +24,27 @@ iptables -t nat -F
 Сохранение настроек:
 
 ```bash
-iptables-save > /etc/sysconfig/iptables
+iptables-save >> /etc/sysconfig/iptables
 systemctl enable iptables
 ```
 
-Настройка правил:
+Настройка правил на примере коммутатора:
 
-![Настройка на примере коммутатора](Image/ALTLinux/iptables%20sw)
+![Настройка на примере коммутатора](Image/ALTLinux/iptables%20sw.png)
 
 ```bash
+iptables -t nat -A POSTROUTING -o <интерфейс с выходом на интернет> -j MASQUERADE
+iptables -A	FORWARD	-i <интернет> -o <внут. инт> -j ACCEPT
+iptables -A	FORWARD	-i <внут. инт> -o <интернет> -n state --state ESTABLISHED,RELATED -j ACCEPT
+```
 
+Настройка iptables после настройки DHCP
+
+```bash
+iptables -A INPUT -i <инт> -p udp -j ACCEPT
+iptables -A INPUT -i <инт> -p tcp -j ACCEPT
+iptables -A OUTPUT -i <инт> -p udp -j ACCEPT
+iptables -A OUTPUT -i <инт> -p tcp -j ACCEPT
 ```
 
 </details>
@@ -66,12 +80,7 @@ echo "192.168.10.0/24 via 192.168.1.1 dev eth0" >> /etc/net/ifaces/eth0/ipv4rout
 <details>
 <summary>🎯 Arch Linux</summary>
 
-Инструкции и примеры для Arch Linux:
-
-```bash
-sudo pacman -Syu
-sudo pacman -S nginx
-```
+Пока пусто :(
 
 </details>
 
@@ -80,11 +89,7 @@ sudo pacman -S nginx
 <details>
 <summary>🌿 EcoRouter</summary>
 
-Описание, настройки или конфиги для EcoRouter:
-
-```bash
-systemctl restart ecorouter
-```
+Пока пусто :(
 
 </details>
 
@@ -95,9 +100,7 @@ systemctl restart ecorouter
 > Автор: **vanyadima**  
 > Контакт: **isurodin@yandex.ru** **https://vk.com/surodyn** **https://t.me/vanyadlma**
 
----
-
 ## 💬 Благодарности
 
 Особая благодарность **[Gerasti](https://github.com/Gerasti)** —  
-за вдохновение и подход к организации проекта, послужившие основой для создания **SuroTools**.
+за вдохновение и подход к организации проекта, которые послужили основой для создания SuroTools.

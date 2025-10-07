@@ -27,7 +27,7 @@ systemctl enable iptables
 
 Настройка правил:
 
-[!Настройка на примере коммутатора](image/ALTLinux/iptables%20sw)
+![Настройка на примере коммутатора](Image/ALTLinux/iptables%20sw)
 
 ```bash
 

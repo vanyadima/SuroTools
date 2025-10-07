@@ -26,7 +26,7 @@ apt-get install bash-completion
 <summary>🔀Настройка маршрутизации</summary>
     
 <details>
-<summary>🧱 iptables</summary>
+<summary>iptables</summary>
 
 Базовые команды iptables:
 
@@ -65,7 +65,7 @@ iptables -A OUTPUT -i <инт> -p tcp -j ACCEPT
 </details>
 
 <details>
-<summary>🔄DHCP</summary>
+<summary>DHCP</summary>
 
 Установка DHCP-сервера
 
@@ -132,7 +132,7 @@ systemctl start dhcpd && systemctl enable dhcpd
 </details>
   
 <details>
-<summary>🛰️ Статическая маршрутизация</summary>
+<summary>Статическая маршрутизация</summary>
 
 Пример настройки статических маршрутов:
 

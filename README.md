@@ -9,7 +9,10 @@
 
 <details>
 <summary>🐧 ALT Linux</summary>
-
+    
+<details>
+<summary>🔀Настройка маршрутизации</summary>
+    
 <details>
 <summary>🧱 iptables</summary>
 
@@ -138,6 +141,20 @@ ip route show
 echo "192.168.10.0/24 via 192.168.1.1 dev eth0" >> /etc/net/ifaces/eth0/ipv4route
 ```
 
+</details>
+
+</details>
+
+<details>
+<summary>🛠️🐧Превращение JEOS из спартанца в джентельмена</summary>
+    
+После установки сего шедевра отечественного айти-прома первым делом нужно поставить нужные пакеты для комфортной работы - потому что даже автодополнение команд в этом дистрибутиве является опциональной, недостижимой мечтой, фичей уровня «Enterprise Deluxe Edition» :)))))
+
+```bash
+apt-get update
+apt-get install nano bash-completion
+```
+    
 </details>
 
 </details>

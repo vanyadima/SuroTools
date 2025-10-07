@@ -50,6 +50,73 @@ iptables -A OUTPUT -i <инт> -p tcp -j ACCEPT
 </details>
 
 <details>
+<summary>🔄DHCP</summary>
+
+Установка DHCP-сервера
+
+```bash
+apt-get install dhcp-server
+```
+Заходим в /etc/dhcp/dhcpd.conf и пишем:
+
+```bash
+default-lease-time 3600;
+max-lease-time 86400;
+authoritative;
+
+subnet 10.21.211.0 netmask 255.255.255.0 {
+    range 10.21.211.10 10.21.211.230;
+    option routers 10.21.211.1;
+    option subnet-mask 255.255.255.0;
+    option broadcast-address 10.21.211.255;
+}
+```
+
+> default-lease-time 3600; - время аренды по умолчанию (1 час)
+>
+> max-lease-time 86400; - максимальное время аренды (24 часа)
+>
+> authoritative; - сервер является авторитетным для данной сети
+>
+> subnet 10.21.211.0 netmask 255.255.255.0 - определение подсети
+>
+> range 10.21.211.10 10.21.211.230; - диапазон выдаваемых IP-адресов
+>
+> option routers 10.21.211.1; - шлюз по умолчанию
+>
+> option subnet-mask 255.255.255.0; - маска подсети
+>
+> option broadcast-address 10.21.211.255; - широковещательный адрес
+
+Создаем /etc/default/isc-dhcp-server и пишем это:
+
+```bash
+DHCP_CONF=/etc/dhcp/dhcpd.conf
+DHCP_PID=/var/run/dhcpd.pid
+DHCP_OPTS="-4"
+INTERFACEv4="<ens34>"
+INTERFACEv6=""
+```
+
+> DHCP_CONF=/etc/dhcp/dhcpd.conf - путь к основному конфигурационному файлу
+>
+> DHCP_PID=/var/run/dhcpd.pid - путь к файлу PID-процесса
+>
+> DHCP_OPTS="-4" - опции запуска (работа только с IPv4)
+>
+> INTERFACEv4="ens34" - интерфейс для IPv4
+>
+> INTERFACEv6="" - интерфейс для IPv6 (пусто - отключено)
+
+Запускаем и добавляем в автозапуск dhcpd
+
+```bash
+systemctl start dhcpd && systemctl enable dhcpd
+```
+
+</details>
+  
+<details>
 <summary>🛰️ Статическая маршрутизация</summary>
 
 Пример настройки статических маршрутов:

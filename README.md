@@ -72,7 +72,7 @@ iptables -A OUTPUT -i <инт> -p tcp -j ACCEPT
 ```bash
 apt-get install dhcp-server
 ```
-Заходим в /etc/dhcp/dhcpd.conf и пишем:
+Настройка /etc/dhcp/dhcpd.conf
 
 ```bash
 default-lease-time 3600;
@@ -103,7 +103,7 @@ subnet 10.21.211.0 netmask 255.255.255.0 {
 >
 > option broadcast-address 10.21.211.255; - широковещательный адрес
 
-Создаем /etc/default/isc-dhcp-server и пишем это:
+Создание и настройка /etc/default/isc-dhcp-server
 
 ```bash
 DHCP_CONF=/etc/dhcp/dhcpd.conf

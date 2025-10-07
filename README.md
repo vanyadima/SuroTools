@@ -369,11 +369,16 @@ systemctl enable --now rsyslog
 </details>
 
 ---
+## 💾 Образы ОС
+
+JEOS ALT Linux - [Скачать](https://nightly.altlinux.org/sisyphus/tested/regular-jeos-systemd-latest-x86_64.iso)
+
+
 
 ## 🧑‍💻 Автор
 
 > Автор: **vanyadima**  
-> Контакт: **isurodin@yandex.ru** **https://vk.com/surodyn** **https://t.me/vanyadlma**
+> Контакт: **isurodin@yandex.ru** **[VK](https://vk.com/surodyn)** **[Telegram](https://t.me/vanyadlma)**
 
 ## 💬 Благодарности
 

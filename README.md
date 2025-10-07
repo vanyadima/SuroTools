@@ -9,6 +9,18 @@
 
 <details>
 <summary>🐧 ALT Linux</summary>
+
+<details>
+<summary>🛠️🐧JEOS</summary>
+    
+После установки сего шедевра отечественного айти-прома первым делом нужно поставить нужные пакеты для комфортной работы - потому что даже автодополнение команд в этом дистрибутиве является опциональной, недостижимой мечтой, фичей уровня «Enterprise Deluxe Edition» :)))))
+
+```bash
+apt-get update
+apt-get install bash-completion
+```
+    
+</details>
     
 <details>
 <summary>🔀Настройка маршрутизации</summary>
@@ -146,14 +158,23 @@ echo "192.168.10.0/24 via 192.168.1.1 dev eth0" >> /etc/net/ifaces/eth0/ipv4rout
 </details>
 
 <details>
-<summary>🛠️🐧Превращение JEOS из спартанца в джентельмена</summary>
+<summary>📦 Установка и настройка ПО</summary>
     
-После установки сего шедевра отечественного айти-прома первым делом нужно поставить нужные пакеты для комфортной работы - потому что даже автодополнение команд в этом дистрибутиве является опциональной, недостижимой мечтой, фичей уровня «Enterprise Deluxe Edition» :)))))
-
+<details>
+<summary>Драйвера VMware</summary>
+    
 ```bash
-apt-get update
-apt-get install nano bash-completion
+apt-get install open-vm-tools open-vm-tools-desktop xrandr
+systemctl enable vmtoolsd
+systemctl start vmtoolsd
 ```
+> open-vm-tools — базовые функции (общая папка, время, пр.)
+>
+> open-vm-tools-desktop — автоматическое разрешение экрана, мышь, графика
+>
+> xrandr — утилита для управления разрешением (на случай ручной настройки)
+    
+</details>
     
 </details>
 

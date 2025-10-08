@@ -353,7 +353,61 @@ systemctl enable --now rsyslog
 ---
 
 <details>
-<summary>🎯 Arch Linux</summary>
+<summary>🧊 Arch Linux</summary>
+
+<details>
+<summary>🛠️ Установка ОС</summary>
+
+<details>
+<summary>Перед установкой</summary>
+Пока пусто :(
+
+</details>
+    
+<details>
+<summary>1. Монтирование и разметка дисков</summary>
+Пока пусто :(
+
+</details>
+
+<details>
+<summary>2. Установка ядра и базовая настройка</summary>
+Пока пусто :(
+
+</details>
+
+<details>
+<summary>3. GRUB</summary>
+Пока пусто :(
+
+</details>
+
+<details>
+<summary>4. Установка графики</summary>
+Пока пусто :(
+
+</details>
+
+<details>
+<summary>Рекомендую к установке</summary>
+Пока пусто :(
+
+</details>
+
+<details>
+<summary>Путь самурая (для ленивых)</summary>
+Пока пусто :(
+
+</details>
+
+</details>
+
+</details>
+
+---
+
+<details>
+<summary>🔄 CentOS</summary>
 
 Пока пусто :(
 

@@ -183,6 +183,36 @@ echo "192.168.10.0/24 via 192.168.1.1 dev eth0" >> /etc/net/ifaces/eth0/ipv4rout
 
 </details>
 
+<details>
+<summary>VLAN</summary>
+
+Создаём каталог в интерфейсах
+
+```bash
+mkdir /etc/net/ifaces/ens33.XX # где XX - номер vlan
+```
+
+Создаем файлы ipv4address и options
+
+```bash
+touch /etc/net/ifaces/ens33.XX/ipv4address
+touch /etc/net/ifaces/ens33.XX/options
+```
+
+Конфигурация options
+
+```bash
+TYPE=vlan
+HOST=ens33
+VID=XX
+DISABLED=no
+BOOTPROTO=static
+```
+
+В конфигурацию ipv4route пишите ip ❗❗❗ *с маской!!!* ❗❗❗
+
+</details>
+
 </details>
 
 <details>

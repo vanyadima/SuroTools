@@ -17,7 +17,7 @@
 
 ```bash
 apt-get update
-apt-get install bash-completion
+apt-get install bash-completion etcnet-full iptables nano 
 ```
     
 </details>
@@ -162,23 +162,49 @@ systemctl start dhcpd && systemctl enable dhcpd
 <details>
 <summary>Статическая маршрутизация</summary>
 
-Пример настройки статических маршрутов:
+### Настройка интерфейса
+
+❗ Интерфесы в виратульную машину добавлять по одному! 
 
 ```bash
-# Добавление маршрута к сети 192.168.10.0/24 через шлюз 192.168.1.1
-ip route add 192.168.10.0/24 via 192.168.1.1 dev eth0
+mkdir /etc/net/ifaces/ens34/
+cp /etc/net/ifaces/ens33/options /etc/net/ifaces/ens34/
+```
+Если папка ifaces пустая, то берем конфиг options отсюда
+
+```bash
+BOOTPROTO=static
+TYPE=eth
+NM_CONTROLLED=no
+DISABLED=no
+CONFIG_WIRELESS=no
+SYSTEMD_BOOTPROTO=dhcp4
+CONFIG_IPV4=yes
+SYSTEMD_CONTROLLED=no
+ONBOOT=yes
+CONFIG_IPV6=no
+```
+В конфигурации ipv4address пишите ip ❗❗❗ *с маской!!!* ❗❗❗
+
+Поднимаем интерфейс
+
+```bash
+ifup ens34
+```
+Или перезапускаем network
+
+```bash
+systemctl restart network
 ```
 
-Проверка таблицы маршрутизации:
+### Настройка шлюза
 
 ```bash
-ip route show
+vim /etc/net/ifaces/ens34/ipv4route
 ```
 
-Сохранение маршрута в конфигурации:
-
 ```bash
-echo "192.168.10.0/24 via 192.168.1.1 dev eth0" >> /etc/net/ifaces/eth0/ipv4route
+default via <ip роутера>
 ```
 
 </details>
@@ -209,7 +235,7 @@ DISABLED=no
 BOOTPROTO=static
 ```
 
-В конфигурацию ipv4route пишите ip ❗❗❗ *с маской!!!* ❗❗❗
+В конфигурации ipv4address пишите ip ❗❗❗ *с маской!!!* ❗❗❗
 
 </details>
 
@@ -550,7 +576,21 @@ lsblk
 
 JEOS ALT Linux - [Скачать](https://nightly.altlinux.org/sisyphus/tested/regular-jeos-systemd-latest-x86_64.iso)
 
+---
+## 📂Полезные штучки
+<details>
+<summary>Автоматизация настройки статики</summary>
 
+<details>
+<summary>ALT Linux</summary>
+
+
+
+</details>
+
+</details>
+
+---
 
 ## 🧑‍💻 Автор
 

@@ -603,9 +603,40 @@ JEOS ALT Linux - [Скачать](https://nightly.altlinux.org/sisyphus/tested/r
 <details>
 <summary>ALT Linux</summary>
 
-
+</details>
 
 </details>
+
+<details>
+<summary>🔧 Репозитории Linux</summary>
+
+| ОС / Дистрибутив | Репозиторий | Путь к конфигурационному файлу |
+| :--- | :--- | :--- |
+| **Debian** | `deb http://deb.debian.org/debian/ bookworm main`<br>`deb-src http://deb.debian.org/debian/ bookworm main` | `/etc/apt/sources.list`<br>`/etc/apt/sources.list.d/` |
+| **Ubuntu** | `deb http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse`<br>`deb-src http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse` | `/etc/apt/sources.list`<br>`/etc/apt/sources.list.d/` |
+| **Fedora** | `baseurl=https://download.fedoraproject.org/pub/fedora/linux/releases/$releasever/Everything/$basearch/os/`<br>`metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch` | `/etc/yum.repos.d/fedora.repo`<br>`/etc/yum.repos.d/fedora-updates.repo` |
+| **CentOS** | `baseurl=http://mirror.centos.org/centos/$releasever/BaseOS/$basearch/os/`<br>`baseurl=http://mirror.centos.org/centos/$releasever/AppStream/$basearch/os/` | `/etc/yum.repos.d/CentOS-Base.repo` |
+| **Arch Linux** | `Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch` | `/etc/pacman.d/mirrorlist` |
+| **openSUSE** | `baseurl=https://download.opensuse.org/distribution/leap/$releasever/repo/oss/` | `/etc/zypp/repos.d/` |
+| **AlmaLinux** | `baseurl=https://repo.almalinux.org/almalinux/$releasever/BaseOS/$basearch/os/`<br>`baseurl=https://repo.almalinux.org/almalinux/$releasever/AppStream/$basearch/os/` | `/etc/yum.repos.d/almalinux.repo` |
+| **Rocky Linux** | `baseurl=https://download.rockylinux.org/pub/rocky/$releasever/BaseOS/$basearch/os/`<br>`baseurl=https://download.rockylinux.org/pub/rocky/$releasever/AppStream/$basearch/os/` | `/etc/yum.repos.d/rocky.repo` |
+
+Переменные
+- `$releasever` — версия дистрибутива (40 для Fedora, 9.0 для CentOS Stream)
+- `$basearch` — архитектура процессора (x86_64, aarch64)
+- `$repo` — имя репозитория (core, extra, community в Arch)
+- `$arch` — архитектура процессора
+
+Ключевые слова репозиториев (Debian/Ubuntu)
+- **main** — официальные пакеты
+- **restricted** — проприетарное ПО, необходимое для системы
+- **universe** — ПО, поддерживаемое сообществом
+- **multiverse** — проприетарное ПО, не поддерживаемое официально
+
+Обновление конфигурации
+- **Debian/Ubuntu**: `sudo apt update`
+- **Fedora/CentOS/RHEL**: `sudo dnf check-update`
+- **Arch Linux**: `sudo pacman -Syy`
 
 </details>
 

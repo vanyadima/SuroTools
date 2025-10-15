@@ -292,7 +292,7 @@ rsyslog — это система, которая собирает, фильтр
 apt-get install rsyslog logrotate
 ```
 
-# Настройка сервера
+### Настройка сервера
 
 Настройка конфига в /etc/rsyslog.conf
 
@@ -397,7 +397,7 @@ systemctl enable --now rsyslog logrotate
 
 ---
 
-# Настройка клиента
+### Настройка клиента
 
 Настройка конфига в /etc/rsyslog.conf
 
@@ -434,7 +434,83 @@ systemctl enable --now rsyslog
 ```
 
 </details>
+
+<details>
+<summary>DNS сервер (bind)</summary>
+
+Установка и включение bind
+
+```bash
+apt-get install bind bind-utils
+systemctl start bind
+```
+
+<details>
+<summary>Базовая настройка (Кэширование сети)</summary>
+
+Самая простая настройка - сделать сервер кэширующим для Вашей сети. Он будет принимать запросы от клиентов и перенаправлять их вышестоящим серверам 
+
+```bash
+options {
+    # Слушаем на всех интерфейсах, порт 53
+    listen-on { any; };
+    listen-on-v6 { any; };
+
+    # Разрешаем запросы от клиентов в вашей сети (например, 192.168.1.0/24)
+    allow-query { localhost; 192.168.1.0/24; };
+
+    # Рекурсивные запросы разрешены для доверенных клиентов
+    recursion yes;
+    allow-recursion { localhost; 192.168.1.0/24; };
+
+    # Укажите форвардеры (DNS-сервера, которым BIND будет пересылать запросы)
+    forwarders {
+        8.8.8.8;
+        8.8.4.4;
+        1.1.1.1;
+    };
+
+    # Каталог по умолчанию для файлов зон
+    directory "/var/bind";
+
+    # Опции безопасности: не раскрываем версию BIND
+    version "not currently available";
+
+    # Опции DNSSEC
+    dnssec-validation auto;
+    auth-nxdomain no;    # conform to RFC1035
+};
+
+```
+</details>
+
+<details>
+<summary>Создание прямой зоны </summary>
     
+</details>
+
+</details>
+
+</details>
+
+<details>
+<summary>🎨 Установка графической оболочки (на примере xfce)</summary>
+
+### Установка
+
+```bash
+apt-get install task-edu-xfce lightdm
+systemctl enable --now lightdm
+```
+
+### Удаление
+
+```bash
+apt-get remove 'xfce4*' 'xfwm4*' 'thunar*' --purge
+apt-get remove lightdm
+systemctl disable lightdm
+```
+
 </details>
 
 </details>
@@ -596,7 +672,7 @@ lsblk
 JEOS ALT Linux - [Скачать](https://nightly.altlinux.org/sisyphus/tested/regular-jeos-systemd-latest-x86_64.iso)
 
 ---
-## 📂Полезные штучки
+## 📂 Полезные штучки
 <details>
 <summary>Автоматизация настройки статики</summary>
 

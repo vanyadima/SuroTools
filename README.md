@@ -821,12 +821,101 @@ reboot
 
 </details>
 
+<details>
+<summary>Настройка маршрутизации</summary>
+
+<details>
+<summary>Настройка портов</summary>
+
+```bash
+config
+set interfaces ethernet <интерфейс на интернет> address dhcp
+set interfaces ethernet <интерфейс на локалку> address <ip адрес/маска>
+commit
+save
+```
+
+Если провайдер выдал статические ip
+
+```bash
+config
+set interfaces ethernet eth0 address <ip адрес/маска>
+set protocols static route 0.0.0.0/0 next-hop <ip адрес шлюза>
+commit
+save
+```
+
+</details>
+
+<details>
+<summary>NAT</summary>
+
+```bash
+config
+set nat source rule 1 outbound-interface name <интерфейс на интернет>
+set nat source rule 1 source address <ip адрес/маска интерфейса на локалку>
+set nat source rule 1 translation address masquerade
+commit
+save
+```
+</details>
+
+<details>
+<summary>VLAN</summary>
+    
+```bash
+config
+set interfaces ethernet eth1 vif 2 address 192.168.2.1/24
+set interfaces ethernet eth2 vif 3 address 192.168.3.1/24
+commit
+save
+```
+
+<code>vif</code> - виртуальный интерфейс VLAN
+
+Если нужно взять несколько интерфейсов в один VLAN - создаем мост
+
+```bash
+configure
+# создаём мост
+set interfaces bridge br0
+
+# добавляем интерфейсы в мост
+set interfaces bridge br0 member interface eth1
+set interfaces bridge br0 member interface eth2
+set interfaces bridge br0 member interface eth3
+set interfaces bridge br0 member interface eth4
+set interfaces bridge br0 member interface eth5
+
+# включаем поддержку VLAN на мосту
+set interfaces bridge br0 enable-vlan
+
+# создаём VLAN на мосту
+set interfaces bridge br0 vif 2 address 192.168.2.1/24
+set interfaces bridge br0 vif 3 address 192.168.3.1/24
+
+commit
+save
+
+```
+
+>Почему мы используем мост br0 в VyOS?
+>Потому что один порт — это скучно, два порта — еще терпимо,
+>а мост — это как админский спа-комплекс для пакетов: 
+>все интерфейсы встречаются, общаются, и никто не теряется. 😎
+
+</details>
+
+</details>
+
 </details>
 
 ---
 ## 💾 Образы ОС
 
 JEOS ALT Linux - [Скачать](https://nightly.altlinux.org/sisyphus/tested/regular-jeos-systemd-latest-x86_64.iso)
+
+VyOS - [Скачать](https://vyos.net/get/)
 
 ---
 ## 📂 Полезные штучки

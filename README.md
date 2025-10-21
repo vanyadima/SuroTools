@@ -906,6 +906,32 @@ save
 
 </details>
 
+<details>
+<summary>DHCP</summary>
+
+```bash
+set service dhcp-server shared-network-name <имя> authoritative
+set service dhcp-server shared-network-name <имя> subnet 192.168.100.0/24 subnet-id 1
+set service dhcp-server shared-network-name <имя> subnet 192.168.100.0/24 default-router '192.168.100.1'
+set service dhcp-server shared-network-name <имя> subnet 192.168.100.0/24 range 0 start '192.168.100.10'
+set service dhcp-server shared-network-name <имя> subnet 192.168.100.0/24 range 0 stop '192.168.100.100'
+commit
+save
+```
+
+</details>
+
+<details>
+<summary>DNS</summary>
+
+```bash
+set system name-server 77.88.8.8
+commit
+save
+```
+
+</details>
+
 </details>
 
 </details>

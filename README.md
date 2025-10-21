@@ -853,7 +853,7 @@ save
 ```bash
 config
 set nat source rule 1 outbound-interface name <интерфейс на интернет>
-set nat source rule 1 source address <ip адрес/маска интерфейса на локалку>
+set nat source rule 1 source address <ip маршрут/маска интерфейса на локалку>
 set nat source rule 1 translation address masquerade
 commit
 save
@@ -896,8 +896,9 @@ set interfaces bridge br0 vif 3 address 192.168.3.1/24
 
 commit
 save
-
 ```
+
+❗ Не забываем настраивать клиент на работу с VLAN! 
 
 >Почему мы используем мост br0 в VyOS?
 >Потому что один порт — это скучно, два порта — еще терпимо,

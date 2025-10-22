@@ -158,7 +158,7 @@ systemctl start dhcpd && systemctl enable dhcpd
 </details>
   
 <details>
-<summary>Статическая маршрутизация</summary>
+<summary>Настройка портов и маршрута</summary>
 
 ### Настройка интерфейса
 

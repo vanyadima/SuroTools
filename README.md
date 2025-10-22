@@ -258,6 +258,35 @@ BOOTPROTO=static
 
 </details>
 
+<details>
+<summary>GRE туннель</summary>
+
+GRE — это протокол для создания виртуальных точка-точка туннелей, который инкапсулирует один IP-пакет внутри другого, позволяя соединять удалённые сети через интернет.
+
+Создаем каталог gre1 и конфигурируем options
+
+```bash
+mkdir /etc/net/ifaces/gre1
+vim /etc/net/ifaces/gre1/options
+```
+
+```bash
+TYPE=iptun
+TUNTYPE=gre
+TUNLOCAL=<внешний ip роутера, с которого настраиваете>
+TUNREMOTE=<внешний ip удаленного роутера>
+```
+
+Настраиваем IP турренля
+
+```
+nano /etc/net/ifaces/gre1/ipv4address
+
+10.10.10.1/30 #к примеру
+```
+
+</details>
+
 </details>
 
 <details>

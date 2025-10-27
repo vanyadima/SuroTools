@@ -790,7 +790,7 @@ nano /etc/pacman.conf
 Include = /etc/pacman.d/mirrorlist
 ```
 
-Это добавит поддержку 32-битных библиотек
+Это добавит поддержку 32-битных библиотек.
 Они нужны, если вы хотите запускать старые программы или, например, игры из Steam, которые до сих пор живут в прошлом=)
 
 Без этого Steam просто посмотрит на вас, скажет «нет библиотек» и уйдёт
@@ -1086,7 +1086,7 @@ sudo pacman -S enlightenment terminology ephoto rage
 </details>
 
 <details>
-<summary>7. Конце установки</summary>
+<summary>7. Конец установки</summary>
 
 ```bash
 exit
@@ -1097,8 +1097,8 @@ reboot
 </details>
 
 <details>
-<summary>Рекомендую после установки установке</summary>
-Пакетный менеджер yay для пользовательского репозитория AUR и ARCH
+<summary>Рекомендую после установки </summary>
+Пакетный менеджер yay для AUR
 
 ```bash
 git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
@@ -1133,11 +1133,46 @@ sudo systemctl enable paccache.timer
 <details>
 <summary>Путь самурая (для ленивых)</summary>
 
-Герой archinstall! Перед тем как ты нажал на этот чудесный спойлер, взгляни на методичку сверху. Она там лежит, как тайный свиток мудрости: не страшно, не укусит, а поможет почувствовать, что Arch - это не просто «клик-клик-установил».
+Герой <code>archinstall</code>! Перед тем как ты нажал на этот чудесный спойлер, взгляни на методичку сверху. Она там лежит, как тайный свиток мудрости: не страшно, не укусит, а поможет почувствовать, что Arch - это не просто «клик-клик-установил».
 
 Подумай о методичке как о карте сокровищ: каждая страница - подсказка, как собрать свой Arch не просто рабочим, а с удовольствием и чуть-чуть гордости. И кто знает, может, именно там ты найдёшь тот секрет, который превращает «Next-Next-Finish» в «Ого, я сам это сделал!».
 
 Так что берёшь чашку кофе, садишься поудобнее и слегка посмеиваешься над собой - методичка сверху ждёт:)
+
+</details>
+
+</details>
+
+<details>
+<summary>📦 Установка и настройка ПО</summary>
+
+<details>
+<summary>Подключение модема</summary>
+
+<details>
+<summary>Встроенные WWAN</summary>
+
+```bash
+sudo pacman -S modemmanager mobile-broadband-provider-info
+sudo systemctl enable --now ModemManager
+```
+
+</details>
+
+<details>
+<summary>USB</summary>
+
+```bash
+sudo pacman -S modemmanager usb_modeswitch
+sudo systemctl enable --now ModemManager
+```
+
+</details>
+
+</details>
+
+<details>
+<summary>VMware Workstation</summary>
 
 </details>
 
@@ -1456,16 +1491,19 @@ VyOS - [Скачать](https://vyos.net/get/)
 <details>
 <summary>🔧 Репозитории Linux</summary>
 
-| ОС / Дистрибутив | Репозиторий | Путь к конфигурационному файлу |
-| :--- | :--- | :--- |
-| **Debian** | `deb http://deb.debian.org/debian/ bookworm main`<br>`deb-src http://deb.debian.org/debian/ bookworm main` | `/etc/apt/sources.list`<br>`/etc/apt/sources.list.d/` |
-| **Ubuntu** | `deb http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse`<br>`deb-src http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse` | `/etc/apt/sources.list`<br>`/etc/apt/sources.list.d/` |
-| **Fedora** | `baseurl=https://download.fedoraproject.org/pub/fedora/linux/releases/$releasever/Everything/$basearch/os/`<br>`metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch` | `/etc/yum.repos.d/fedora.repo`<br>`/etc/yum.repos.d/fedora-updates.repo` |
-| **CentOS** | `baseurl=http://mirror.centos.org/centos/$releasever/BaseOS/$basearch/os/`<br>`baseurl=http://mirror.centos.org/centos/$releasever/AppStream/$basearch/os/` | `/etc/yum.repos.d/CentOS-Base.repo` |
-| **Arch Linux** | `Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch` | `/etc/pacman.d/mirrorlist` |
-| **openSUSE** | `baseurl=https://download.opensuse.org/distribution/leap/$releasever/repo/oss/` | `/etc/zypp/repos.d/` |
-| **AlmaLinux** | `baseurl=https://repo.almalinux.org/almalinux/$releasever/BaseOS/$basearch/os/`<br>`baseurl=https://repo.almalinux.org/almalinux/$releasever/AppStream/$basearch/os/` | `/etc/yum.repos.d/almalinux.repo` |
-| **Rocky Linux** | `baseurl=https://download.rockylinux.org/pub/rocky/$releasever/BaseOS/$basearch/os/`<br>`baseurl=https://download.rockylinux.org/pub/rocky/$releasever/AppStream/$basearch/os/` | `/etc/yum.repos.d/rocky.repo` |
+| ОС / Дистрибутив                  | Репозиторий                                                                                                                                                                                                 | Путь к конфигурационному файлу                                           |
+| :-------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| **Debian**                        | `deb http://deb.debian.org/debian/ bookworm main`<br>`deb-src http://deb.debian.org/debian/ bookworm main`                                                                                                  | `/etc/apt/sources.list`<br>`/etc/apt/sources.list.d/`                    |
+| **Ubuntu**                        | `deb http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse`<br>`deb-src http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse`                                  | `/etc/apt/sources.list`<br>`/etc/apt/sources.list.d/`                    |
+| **Fedora**                        | `baseurl=https://download.fedoraproject.org/pub/fedora/linux/releases/$releasever/Everything/$basearch/os/`<br>`metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch` | `/etc/yum.repos.d/fedora.repo`<br>`/etc/yum.repos.d/fedora-updates.repo` |
+| **CentOS**                        | `baseurl=http://mirror.centos.org/centos/$releasever/BaseOS/$basearch/os/`<br>`baseurl=http://mirror.centos.org/centos/$releasever/AppStream/$basearch/os/`                                                 | `/etc/yum.repos.d/CentOS-Base.repo`                                      |
+| **Arch Linux**                    | `Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch`                                                                                                                                            | `/etc/pacman.d/mirrorlist`                                               |
+| **openSUSE**                      | `baseurl=https://download.opensuse.org/distribution/leap/$releasever/repo/oss/`                                                                                                                             | `/etc/zypp/repos.d/`                                                     |
+| **AlmaLinux**                     | `baseurl=https://repo.almalinux.org/almalinux/$releasever/BaseOS/$basearch/os/`<br>`baseurl=https://repo.almalinux.org/almalinux/$releasever/AppStream/$basearch/os/`                                       | `/etc/yum.repos.d/almalinux.repo`                                        |
+| **Rocky Linux**                   | `baseurl=https://download.rockylinux.org/pub/rocky/$releasever/BaseOS/$basearch/os/`<br>`baseurl=https://download.rockylinux.org/pub/rocky/$releasever/AppStream/$basearch/os/`                             | `/etc/yum.repos.d/rocky.repo`                                            |
+| **Astra Linux (Орел / Смоленск)** | `deb [trusted=yes] http://repo.astralinux.ru/astra/stable/orel main contrib non-free`<br>`deb-src [trusted=yes] http://repo.astralinux.ru/astra/stable/orel main contrib non-free`                          | `/etc/apt/sources.list`<br>`/etc/apt/sources.list.d/`                    |
+| **ALT Linux**                     | `rpm [alt] http://mirror.yandex.ru/altlinux p10 branch`<br>`rpm [alt] http://mirror.yandex.ru/altlinux p10 updates`                                                                                         | `/etc/apt/sources.list`<br>`/etc/apt/sources.list.d/`                    |
+
 
 Переменные
 - `$releasever` — версия дистрибутива (40 для Fedora, 9.0 для CentOS Stream)
@@ -1486,12 +1524,28 @@ VyOS - [Скачать](https://vyos.net/get/)
 
 </details>
 
+<details>
+<summary>🔧✝️ Репозитории Яндекса: теперь с православным apt update</summary>
+
+| ОС / Дистрибутив  | Репозиторий                                                                                                                                                                                                                                                          | Путь к конфигурационному файлу                                           |
+| :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| **Debian**        | `deb http://mirror.yandex.ru/debian/ bookworm main`<br>`deb-src http://mirror.yandex.ru/debian/ bookworm main`<br>`deb http://mirror.yandex.ru/debian-security/ bookworm-security main`<br>`deb-src http://mirror.yandex.ru/debian-security/ bookworm-security main` | `/etc/apt/sources.list`<br>`/etc/apt/sources.list.d/`                    |
+| **Ubuntu**        | `deb http://mirror.yandex.ru/ubuntu/ noble main restricted universe multiverse`<br>`deb-src http://mirror.yandex.ru/ubuntu/ noble main restricted universe multiverse`                                                                                               | `/etc/apt/sources.list`<br>`/etc/apt/sources.list.d/`                    |
+| **Fedora**        | `baseurl=https://mirror.yandex.ru/fedora/linux/releases/$releasever/Everything/$basearch/os/`<br>`metalink=https://mirror.yandex.ru/fedora/linux/updates/$releasever/Everything/$basearch/`                                                                          | `/etc/yum.repos.d/fedora.repo`<br>`/etc/yum.repos.d/fedora-updates.repo` |
+| **CentOS Stream** | `baseurl=http://mirror.yandex.ru/centos-stream/$releasever-stream/BaseOS/$basearch/os/`<br>`baseurl=http://mirror.yandex.ru/centos-stream/$releasever-stream/AppStream/$basearch/os/`                                                                                | `/etc/yum.repos.d/CentOS-Base.repo`                                      |
+| **Arch Linux**    | `Server = https://mirror.yandex.ru/archlinux/$repo/os/$arch`                                                                                                                                                                                                         | `/etc/pacman.d/mirrorlist`                                               |
+| **openSUSE Leap** | `baseurl=https://mirror.yandex.ru/opensuse/distribution/leap/$releasever/repo/oss/`<br>`baseurl=https://mirror.yandex.ru/opensuse/update/leap/$releasever/oss/`                                                                                                      | `/etc/zypp/repos.d/`                                                     |
+| **AlmaLinux**     | `baseurl=https://mirror.yandex.ru/almalinux/$releasever/BaseOS/$basearch/os/`<br>`baseurl=https://mirror.yandex.ru/almalinux/$releasever/AppStream/$basearch/os/`                                                                                                    | `/etc/yum.repos.d/almalinux.repo`                                        |
+| **Rocky Linux**   | `baseurl=https://mirror.yandex.ru/rockylinux/$releasever/BaseOS/$basearch/os/`<br>`baseurl=https://mirror.yandex.ru/rockylinux/$releasever/AppStream/$basearch/os/`                                                                                                  | `/etc/yum.repos.d/rocky.repo`                                            |
+
+</details>
+
 ---
 
 ## 🧑‍💻 Автор
 
 > Автор: **vanyadima**  
-> Контакт: **isurodin@yandex.ru** **[VK](https://vk.com/surodyn)** **[Telegram](https://t.me/vanyadlma)**
+> Контакт: **isurodin@tutanota.com** **[Telegram](https://t.me/vanyadlma)**
 
 ## 💬 Благодарности
 

@@ -65,9 +65,9 @@ iptables-save >> /etc/sysconfig/iptables
 systemctl enable iptables
 ```
 
- правил на примере коммутатора:
+Настройка правил на примере коммутатора:
 
-![ на примере коммутатора](Image/ALTLinux/iptables%20sw.png)
+![Настройка на примере коммутатора](Image/ALTLinux/iptables%20sw.png)
 
 ```bash
 iptables -t nat -A POSTROUTING -o <интерфейс с выходом на интернет> -j MASQUERADE
@@ -81,7 +81,7 @@ iptables -A	FORWARD	-i <внут. инт> -o <интернет> -n state --state
 >
 >iptables -A	FORWARD	-i <внут. инт> -o <интернет> -n state --state ESTABLISHED,RELATED -j ACCEPT - Пропускает обратно только "ответы" на их запросы, повышая безопасность.
 
- iptables после настройки DHCP
+Настройка iptables после настройки DHCP
 
 ```bash
 iptables -A INPUT -i <инт> -p udp -j ACCEPT
@@ -98,7 +98,7 @@ iptables -A INPUT -i <инт> -p tcp -j ACCEPT
 ```bash
 apt-get install dhcp-server
 ```
- /etc/dhcp/dhcpd.conf
+Настройка /etc/dhcp/dhcpd.conf
 
 ```bash
 default-lease-time 3600;
@@ -129,7 +129,7 @@ subnet 10.21.211.0 netmask 255.255.255.0 {
 >
 > option broadcast-address 10.21.211.255; - широковещательный адрес
 
-Создание и  /etc/default/isc-dhcp-server
+Создание и настройка /etc/default/isc-dhcp-server
 
 ```bash
 DHCP_CONF=/etc/dhcp/dhcpd.conf
@@ -158,9 +158,9 @@ systemctl start dhcpd && systemctl enable dhcpd
 </details>
   
 <details>
-<summary> портов и маршрута</summary>
+<summary>Настройка портов и маршрута</summary>
 
-###  интерфейса
+### Настройка интерфейса
 
 ❗ Интерфейсы в виртуальную машину добавляем по одному.
 
@@ -207,7 +207,7 @@ ifup ens34
 systemctl restart network
 ```
 
-###  шлюза
+### Настройка шлюза
 
 ```bash
 vim /etc/net/ifaces/ens34/ipv4route
@@ -790,7 +790,7 @@ nano /etc/pacman.conf
 Include = /etc/pacman.d/mirrorlist
 ```
 
-Это добавит поддержку 32-битных библиотек.
+Это добавит поддержку 32-битных библиотек
 Они нужны, если вы хотите запускать старые программы или, например, игры из Steam, которые до сих пор живут в прошлом=)
 
 Без этого Steam просто посмотрит на вас, скажет «нет библиотек» и уйдёт
@@ -1086,7 +1086,7 @@ sudo pacman -S enlightenment terminology ephoto rage
 </details>
 
 <details>
-<summary>7. Конец установки</summary>
+<summary>7. Конце установки</summary>
 
 ```bash
 exit
@@ -1097,7 +1097,7 @@ reboot
 </details>
 
 <details>
-<summary>Рекомендую после установки ОС</summary>
+<summary>Рекомендую после установки установке</summary>
 Пакетный менеджер yay для пользовательского репозитория AUR и ARCH
 
 ```bash
@@ -1133,18 +1133,13 @@ sudo systemctl enable paccache.timer
 <details>
 <summary>Путь самурая (для ленивых)</summary>
 
-Герой <code>archinstall</code>! Перед тем как ты нажал на этот чудесный спойлер, взгляни на методичку сверху. Она там лежит, как тайный свиток мудрости: не страшно, не укусит, а поможет почувствовать, что Arch - это не просто «клик-клик-установил».
+Герой archinstall! Перед тем как ты нажал на этот чудесный спойлер, взгляни на методичку сверху. Она там лежит, как тайный свиток мудрости: не страшно, не укусит, а поможет почувствовать, что Arch - это не просто «клик-клик-установил».
 
 Подумай о методичке как о карте сокровищ: каждая страница - подсказка, как собрать свой Arch не просто рабочим, а с удовольствием и чуть-чуть гордости. И кто знает, может, именно там ты найдёшь тот секрет, который превращает «Next-Next-Finish» в «Ого, я сам это сделал!».
 
 Так что берёшь чашку кофе, садишься поудобнее и слегка посмеиваешься над собой - методичка сверху ждёт:)
 
 </details>
-
-</details>
-
-<details>
-<summary>📦 Установка и настройка ПО</summary>
 
 </details>
 

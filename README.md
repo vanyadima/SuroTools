@@ -1174,6 +1174,19 @@ sudo systemctl enable --now ModemManager
 <details>
 <summary>VMware Workstation</summary>
 
+Скачиваем [VMware](https://www.comss.ru/download/page.php?id=2110) и устанавливаем:
+
+```bash
+sudo sh ./VMware-Workstation-Full-25H2-24995812.x86_64.bundle
+```
+
+Далее устанавливаем open-vm-tools и запускаем 
+
+```bash
+sudo pacman -S open-vm-tools
+sudo vmware
+```
+
 </details>
 
 </details>

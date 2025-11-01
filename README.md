@@ -110,6 +110,8 @@ subnet 10.21.211.0 netmask 255.255.255.0 {
     option routers 10.21.211.1;
     option subnet-mask 255.255.255.0;
     option broadcast-address 10.21.211.255;
+    option domain-name "example.local";
+    option domain-name-servers 192.168.1.1, 8.8.8.8;
 }
 ```
 
@@ -128,6 +130,16 @@ subnet 10.21.211.0 netmask 255.255.255.0 {
 > option subnet-mask 255.255.255.0; - маска подсети
 >
 > option broadcast-address 10.21.211.255; - широковещательный адрес
+>
+> option domain-name "example.local"; - домен
+>
+> option domain-name-servers 192.168.1.1, 8.8.8.8; - адрес домена
+
+Проверка конфигурации
+
+```bash
+dhcpd -t -cf /etc/dhcp/dhcpd.conf
+```
 
 Создание и настройка /etc/default/isc-dhcp-server
 
@@ -185,14 +197,7 @@ cp /etc/net/ifaces/ens33/options /etc/net/ifaces/ens34/
 ```bash
 BOOTPROTO=static
 TYPE=eth
-NM_CONTROLLED=no
-DISABLED=no
-CONFIG_WIRELESS=no
-SYSTEMD_BOOTPROTO=dhcp4
 CONFIG_IPV4=yes
-SYSTEMD_CONTROLLED=no
-ONBOOT=yes
-CONFIG_IPV6=no
 ```
 В конфигурации ipv4address пишите ip ❗❗❗ *с маской!!!* ❗❗❗
 
@@ -504,7 +509,7 @@ options {
     auth-nxdomain no;    // conform to RFC1035
 };
 
-// Доп. файлы
+// Доп. файлы в /etc/named.conf!!!
 include "/etc/named/named.conf.local";
 include "/etc/named/named.conf.log";
 include "/etc/named/named.conf.acl";
@@ -760,6 +765,43 @@ $TTL 86400
 ```
 
 </details>
+
+</details>
+
+<details>
+<summary>Chrony</summary>
+
+### Настройка сервера
+
+```bash
+apt-get install chrony
+```
+
+Идем в /etc/chrony.conf и в конфиге пишем:
+
+https://www.ntp-servers.net/servers.html - сервера времени
+
+```bash
+server <адресс сервера времени> iburst     # iburst нужен для ускорения первоначальной синхронизации
+allow 192.168.0.0/24   # замените на подсеть вашей сети
+```
+
+Добавляем в автозагрузку и запускаем
+
+### Настройка клиента
+
+В /etc/chrony.conf
+
+```bash
+server <ip сервера> iburst
+```
+
+Запускаем и проверяем:
+
+```bash
+chronyc sources -v
+chronyc tracking
+```
 
 </details>
 

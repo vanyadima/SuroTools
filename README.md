@@ -1523,6 +1523,82 @@ sudo mount -a
 ---
 
 <details>
+<summary>🌀 Debian</summary>
+
+<details>
+<summary>🛠️ Установка ОС</summary>
+
+Установка Debian - это максимально просто. С этим справится даже ваша бабушка, если она умеет несколько раз кликнуть мышкой «Далее». Инсталлятор проведёт её через все шаги. Поэтому я не буду рассказывать про установку, а лучше напишу, что нужно сделать сразу ПОСЛЕ неё, чтобы система стала полностью готовой к работе
+
+Добавляем вашего пользователя в sudo
+
+```bash
+apt install sudo //если не поставили во время установки
+usermod -aG sudo <ваш username>
+```
+
+<details>
+<summary>Репозитории</summary>
+Добавляем репозитории для проприетарных драйверов
+    
+```bash
+sudo nano /etc/apt/sources.list
+
+deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+```
+
+Устанавливем flatpak
+
+```bash
+sudo apt install flatpak
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+```
+
+--
+
+</details>
+
+Обновляем систему
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+Ставим драйвера + нужное ПО
+```bash
+sudo apt install -y curl wget git vim htop nano build-essential apt-transport-https ca-certificates gnupg lsb-release
+```
+
+</details>
+
+<details>
+<summary>📦 Настройка ОС</summary>
+
+<details>
+<summary>Добавление системных каталогов в переменную окружения PATH пользователя </summary>
+
+...или проще говоря, настройка пользователя, чтобы он смог воспользоваться системными командами без sudo
+
+Добавляем в ~/.bashrc в конец
+
+```bash
+export PATH=$PATH:/sbin:/usr/sbin
+```
+
+Обновим окружение
+
+```bash
+source ~/.bashrc
+```
+
+</details>
+
+</details>
+
+</details>
+
+---
+
+<details>
 <summary>🌿 EcoRouter</summary>
 
 Пока пусто :(

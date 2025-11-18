@@ -280,6 +280,9 @@ TYPE=iptun
 TUNTYPE=gre
 TUNLOCAL=<внешний ip роутера, с которого настраиваете>
 TUNREMOTE=<внешний ip удаленного роутера>
+TUNOPTIONS='ttl 64'
+TUNTTL=64
+TUNMTU=1476
 ```
 
 Настраиваем IP турренля

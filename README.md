@@ -772,6 +772,166 @@ $TTL 86400
 </details>
 
 <details>
+<summary>dnsmasq</summary>
+
+dnsmasq - это лёгкий сервис, который одновременно работает как простой DNS-сервер и DHCP-сервер. Он раздаёт IP-адреса устройствам в сети и может кешировать DNS-запросы, а также давать локальные доменные имена (например, home.lan). Его используют на домашних роутерах и небольших серверах, потому что он простой, быстрый и не требует сложной настройки.
+
+> [!WARNING]
+> У вас должен быть отключен BIND!!!
+
+Заходим в /etc/dnsmasq.conf
+
+```bash
+# ————— DNS —————
+
+# DNS будет работать на локальных интерфейсах
+listen-address=127.0.0.1,192.168.0.1
+
+# Домен
+domain=home.lan
+
+# Запрещаем пересылку запросов для наших локальных доменов
+local=/home.lan/
+
+# Включаем DNS-кеш
+cache-size=1000
+
+# Форвардинг DNS (провайдер, DoH, локальный резолвер)
+
+server=77.88.8.8  # МЫ ЛЮБИМ ЯНДЕКС
+
+# Разрешаем использование /etc/hosts
+expand-hosts
+
+# Логи
+log-queries
+log-facility=/var/log/dnsmasq.log
+
+# ————— DHCP —————
+
+# Включаем DHCP-сервер
+dhcp-range=192.168.0.50,192.168.0.150,12h
+
+# Маска и шлюз
+dhcp-option=3,192.168.0.1          # Default gateway
+dhcp-option=6,192.168.0.1          # DNS — сам dnsmasq
+
+# Домен для DHCP-клиентов
+dhcp-option=15,home.lan
+
+# ————— Безопасность —————
+
+# Запрещаем интерфейсы, на которых dnsmasq не должен работать
+#except-interface=lo
+#except-interface=eth1
+
+# Запуск от непривилегированного пользователя
+user=nobody
+group=nogroup
+
+```
+
+<details>
+<summary>Таблица DHCP опций</summary>
+
+|     Код | Название                         | Описание                        |
+| ------: | -------------------------------- | ------------------------------- |
+|0        | Pad                              | Пустой байт                     |
+|       1 | Subnet Mask                      | Маска подсети                   |
+|       2 | Time Offset                      | Смещение времени                |
+|       3 | Router                           | Основной шлюз (Default Gateway) |
+|       4 | Time Server                      | Сервер времени                  |
+|       5 | Name Server                      | Сервер имён (несовр.)           |
+|       6 | DNS Server                       | DNS-сервера                     |
+|       7 | Log Server                       | Сервер журнала                  |
+|       8 | Cookie Server                    | Сервер cookies (редкость)       |
+|       9 | LPR Server                       | Принт-сервер                    |
+|      10 | Impress Server                   | Старый print сервер             |
+|      11 | RLP Server                       | Сервер RLP                      |
+|      12 | Hostname                         | Имя клиента                     |
+|      13 | Boot File Size                   | Размер загрузочного файла       |
+|      14 | Merit Dump File                  | Dump-файл                       |
+|      15 | Domain Name                      | Домен клиента                   |
+|      16 | Swap Server                      | Swap-сервер                     |
+|      17 | Root Path                        | Корневой путь                   |
+|      18 | Extensions Path                  | Путь расширений                 |
+|      19 | IP Forwarding                    | Разрешить форвардинг?           |
+|      20 | Non-local Source Routing         | Маршрутизация?                  |
+|      21 | Policy Filter                    | Фильтр политик                  |
+|      22 | Max Datagram Reassembly          | Максимальная фрагментация       |
+|      23 | Default TTL                      | TTL по умолчанию                |
+|      24 | Path MTU Aging                   | Время устаревания MTU           |
+|      25 | Path MTU Plateau Table           | Таблица MTU                     |
+|      26 | MTU Interface                    | MTU интерфейса                  |
+|      27 | MTU Subnet                       | MTU подсети                     |
+|      28 | Broadcast Address                | Broadcast адрес                 |
+|      29 | Trailer Encapsulation            | Trailer используется?           |
+|      30 | ARP Timeout                      | Таймаут ARP                     |
+|      31 | Ethernet Encapsulation           | Ethernet флаг                   |
+|      32 | TCP Default TTL                  | TCP TTL                         |
+|      33 | TCP Keepalive Interval           | Интервал keepalive              |
+|      34 | TCP Keepalive Garbage            | Отправлять garbage?             |
+|      35 | NIS Domain                       | NIS домен                       |
+|      36 | NIS Server                       | NIS сервер                      |
+|      37 | NTP Server                       | Сервер времени NTP              |
+|      38 | Vendor Specific                  | Vendor-specific параметры       |
+|      39 | NetBIOS Name Server              | WINS сервер                     |
+|      40 | NetBIOS Dist Server              | WINS распределённый             |
+|      41 | NetBIOS Node Type                | Тип узла NetBIOS                |
+|      42 | NetBIOS Scope                    | Scope NetBIOS                   |
+|      43 | Vendor Specific Info             | Данные производителя            |
+|      44 | NetBIOS Name Server              | WINS                            |
+|      45 | NetBIOS Dist Server              | WINS распредел.                 |
+|      46 | NetBIOS Node Type                | B, P, M, H                      |
+|      47 | NetBIOS Scope                    | Scope                           |
+|      48 | X Window Font Server             | Шрифтовый X-сервер              |
+|      49 | X Window Display Manager         | XDM сервер                      |
+|      50 | Requested IP Address             | Клиент хочет IP                 |
+|      51 | Lease Time                       | Время аренды                    |
+|      52 | Option Overload                  | Доп. поля                       |
+|      53 | DHCP Message Type                | Тип DHCP сообщения              |
+|      54 | DHCP Server ID                   | IP DHCP сервера                 |
+|      55 | Parameter Request List           | Запрос опций                    |
+|      56 | Message                          | Сообщение                       |
+|      57 | Max DHCP Message Size            | Макс. размер пакета             |
+|      58 | Renewal Time                     | T1                              |
+|      59 | Rebinding Time                   | T2                              |
+|      60 | Vendor Class ID                  | ID класса                       |
+|      61 | Client Identifier                | Идентификатор клиента           |
+|      62 | Netware/IP Domain Name           | NetWare                         |
+|      63 | Netware/IP Sub Options           | Подопции                        |
+|      64 | NIS+ Domain                      | NIS+ домен                      |
+|      65 | NIS+ Server                      | NIS+ сервер                     |
+|      66 | TFTP Server Name                 | Адрес TFTP (PXE)                |
+|      67 | Bootfile Name                    | Имя PXE-файла                   |
+|      68 | Mobile IP Home Agent             | Mobile IP                       |
+|      69 | SMTP Server                      | Почтовый сервер                 |
+|      70 | POP3 Server                      | POP3                            |
+|      71 | NNTP Server                      | Новости                         |
+|      72 | WWW Server                       | Web-сервер                      |
+|      73 | Finger Server                    | Finger                          |
+|      74 | IRC Server                       | IRC                             |
+|      75 | StreetTalk Server                | StreetTalk                      |
+|      76 | STDA Server                      | StreetTalk Directory            |
+|      77 | User Class                       | Класс пользователя              |
+|      78 | SLP Directory Agent              | SLP                             |
+|      79 | SLP Scope                        | SLP                             |
+|  80–127 | Зарезервировано (IANA)           | —                               |
+| 128–135 | Vendor Specific (PXE)            | PXE параметры BIOS/UEFI         |
+| 136–254 | Разные расширения производителей | —                               |
+|     255 | End                              | Конец списка опций              |
+
+После этого запускаем dnsmasq
+
+```bash
+systemctl enable --now dnsmasq
+```
+
+</details>
+
+</details>
+
+<details>
 <summary>Chrony</summary>
 
 ### Настройка сервера

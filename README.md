@@ -808,6 +808,139 @@ chronyc tracking
 
 </details>
 
+<details>
+<summary>SAMBA</summary>
+
+<details>
+<summary>Настройка домена Samba Active Directory</summary>
+
+### Настройка сервера
+
+Устанавливаем необходимые пакеты
+
+```bash
+apt-get install -y task-samba-dc
+```
+
+Очищаем от первоначальных конфигов
+
+```bash
+rm -f /etc/samba/smb.conf
+rm -rf /var/lib/samba
+rm -rf /var/cache/samba
+mkdir -p /var/lib/samba/sysvol
+```
+
+Настраиваем DNS сервер в /etc/resolf.conf
+
+```bash
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
+```
+
+Создаем домен
+
+```bash
+samba-tool domain provision
+```
+
+Активируем и запускаем службу Samba
+
+```bash
+systemctl enable --now samba
+```
+
+Копируем сгенерированный файл настроек Kerberos
+
+```bash
+cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
+```
+
+Проверяем на работоспособность
+
+```bash
+samba-tool domain info 127.0.0.1
+host -t SRV _kerberos._udp.ad.team
+host -t SRV _ldap._tcp.ad.team
+host -t A srv-hq.ad.team
+```
+
+Получаем билет Kerberos и проверяем его наличие
+
+```bash
+kinit administrator@AD.TEAM
+klist
+```
+
+### Настройка клинета
+
+Устанавливаем пакеты для интеграции с Active Directory
+
+```bash
+apt-get install -y task-auth-ad-sssd
+```
+
+Активируем службы для работы с доменом
+
+```bash
+systemctl enable --now smb winbind sssd
+```
+
+В /etc/krb5.conf вписываем:
+
+```bash
+[libdefaults]
+default_realm = AD.TEAM
+dns_lookup_kdc = true
+dns_lookup_realm = false
+ticket_lifetime = 24h
+renew_lifetime = 7d
+forwardable = true
+
+[realms]
+AD.TEAM = {
+    kdc = 192.168.11.67
+    default_domain = ad.team
+    admin_server = 192.168.11.67
+}
+
+[domain_realm]
+.ad.team = AD.TEAM
+ad.team = AD.TEAM
+```
+
+Настройка DNS
+
+```bash
+domain ad.team
+nameserver 192.168.11.67
+search ad.team
+```
+
+Присоединяемся к домену
+
+```bash
+net ads join -U administrator@AD.TEAM -S 192.168.11.67
+su -
+acc
+```
+
+Проверка
+
+```bash
+host srv-hq
+host $(hostname)
+```
+
+После этого перезагружаемся
+
+```bash
+reboot
+```
+
+</details>
+
+</details>
+
 </details>
 
 <details>

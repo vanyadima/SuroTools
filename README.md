@@ -297,6 +297,58 @@ nano /etc/net/ifaces/gre1/ipv4address
 
 </details>
 
+<details>
+<summary>FRR</summary>
+
+FRR (Free Range Routing) - это набор демонов, который превращает обычный сервер в маршрутизатор, будто он всегда этим и мечтал быть. Поддерживает BGP, OSPF и другую сетевую магию, работает быстро и запускается почти везде. Отличный способ не покупать дорогую железку и при этом выглядеть профи.
+
+Установка
+
+```bash
+apt-get install frr
+systemctl enable --now frr
+```
+
+### Настройка OSPF
+
+Чтобы начать настраивать OSPF, сначала подружите ваши роутеры через GRE-туннели (см. сверху). Без него OSPF просто не знает, куда идти и обижается :(
+
+Входим в оболочку
+```bash
+vtysh
+```
+
+Базовая настройка OSPF
+
+```vtysh
+conf
+router ospf
+    router-id <ID роутера>
+    network <IP вашего туннеля> area 0.0.0.0
+    network <IP-ики вашей внутренней сети> area 0.0.0.0
+    ...
+    network <IP-ики вашей внутренней сети> area 0.0.0.0
+do wr
+```
+
+MD5-аутентификация в OSPF
+
+```vtysh
+interface <инт>
+    ip ospf authentication message-digest
+    ip ospf message-digest-key 1 md5 <пароль>
+do wr
+```
+
+Проверка работы OSPF
+
+```vtysh
+show ip ospf neighbor // проверка соседей
+show ip ospf database // проверка lsa
+```
+
+</details>
+
 </details>
 
 <details>

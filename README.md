@@ -1168,6 +1168,184 @@ reboot
 
 </details>
 
+<details>
+<summary>Создание системной группы и пользователя</summary>
+
+Создать группу
+
+```bash
+sudo samba-tool group add <имя>
+```
+
+Создание пользователя
+
+```bash
+sudo samba-tool user create <имя>
+```
+
+Добавить пользователя в группу
+
+```bash
+sudo samba-tool group addmembers <имя группы> <имя пользователя>
+```
+
+Проверка, что пользователь создан и добавлен в группу
+
+```bash
+sudo samba-tool user list
+```
+
+```bash
+sudo samba-tool group listmembers students
+```
+
+--
+
+</details>
+
+<details>
+<summary>Полезные штучки</summary>
+
+Ниже приведён полный набор команд для расширенной настройки домена Samba AD DC.
+
+```bash
+#############################
+# 1. ПАРОЛЬНАЯ ПОЛИТИКА
+#############################
+
+# Отключить сложность паролей
+sudo samba-tool domain passwordsettings set --complexity=off
+
+# Минимальная длина пароля (1 для тестов)
+sudo samba-tool domain passwordsettings set --min-pwd-length=1
+
+# Максимальное время действия пароля (0 = не истекает)
+sudo samba-tool domain passwordsettings set --max-pwd-age=0
+
+# Минимальное время перед сменой (0 = отключено)
+sudo samba-tool domain passwordsettings set --min-pwd-age=0
+
+# Длина истории паролей (0 = можно повторять)
+sudo samba-tool domain passwordsettings set --pwd-history-length=0
+```
+
+```bash
+#############################
+# 2. ПОЛИТИКА БЛОКИРОВКИ
+#############################
+
+# Порог блокировки (0 = блокировка отключена)
+sudo samba-tool domain passwordsettings set --lockout-threshold=0
+
+# Длительность блокировки, мин
+sudo samba-tool domain passwordsettings set --lockout-duration=30
+
+# Время сброса счётчика неудачных попыток
+sudo samba-tool domain passwordsettings set --reset-count=30
+```
+
+```bash
+#############################
+# 3. ПОЛИТИКА KERBEROS
+#############################
+
+# Время жизни тикета (часы)
+sudo samba-tool domain passwordsettings set --krb-ticket-lifetime=24
+
+# Время обновления тикета (часы)
+sudo samba-tool domain passwordsettings set --krb-renewal-lifetime=168   # 7 дней
+```
+
+```bash
+#############################
+# 4. ПОЛИТИКА УЧЁТНЫХ ЗАПИСЕЙ
+#############################
+
+# Сделать так, чтобы никто не должен менять пароль при первом входе
+# (для всех новых пользователей уже не требуется смена)
+# (для конкретного: samba-tool user setpassword user --must-change-at-next-login=no)
+
+# Разрешить устаревшие (expired) пароли использовать для входа
+sudo samba-tool domain passwordsettings set --store-plaintext-password=yes
+
+# Разрешить пустые пароли (если сильно нужно)
+# ВНИМАНИЕ! Использовать только в изолированных стендах
+sudo samba-tool domain passwordsettings set --allow-plaintext-password=yes
+```
+
+```bash
+#############################
+# 5. ПОЛИТИКА АВТОРИЗАЦИИ ПО ВРЕМЕНИ
+#############################
+
+# Ограничение часов входа — отключено по умолчанию.
+# Но для справки:
+# sudo samba-tool user setexpiry <username> --expiry=<YYYYMMDDHHMMSS.0Z>
+
+# Включить "пароль не истекает" по умолчанию для новых пользователей
+# (нужно править smb.conf, но через samba-tool можно для каждого)
+# Пример: sudo samba-tool user setexpiry user --noexpiry
+```
+
+```bash
+#############################
+# 6. ПАРАМЕТРЫ БЕЗОПАСНОСТИ ДОМЕНА
+#############################
+
+# Разрешить использование старых алгоритмов шифрования (NTLMv1/LM)
+# (не рекомендовано, но иногда нужно для старых устройств)
+sudo samba-tool domain passwordsettings set --allow-microsecond-timestamps=yes
+
+# Включить поддержку слабых клиентов:
+sudo samba-tool domain passwordsettings set --allow-weak-crypto=yes
+```
+
+```bash
+#############################
+# 7. ПОЛИТИКА TGT/TGS (KRB5)
+#############################
+
+# Maximally permissive Kerberos policy
+sudo samba-tool domain passwordsettings set --krb-policy-flags=0x00000000
+```
+
+```bash
+#############################
+# 8. ПАРАМЕТРЫ АУДИТА И ЛОГОВ
+#############################
+
+# Повышение детализации логов AD
+sudo samba-tool domain level show
+
+# Логи Samba:
+# sudo smbcontrol all debug 3
+# sudo smbcontrol all debug 10   # максимум
+```
+
+```bash
+#############################
+# 9. ПАРАМЕТРЫ ДОМЕННОГО ФУНКЦИОНАЛЬНОГО УРОВНЯ
+#############################
+
+# Узнать уровень:
+sudo samba-tool domain level show
+
+# Установить максимально доступный уровень:
+sudo samba-tool domain level raise --domain-level=2008_R2
+sudo samba-tool domain level raise --forest-level=2008_R2
+```
+
+```bash
+#############################
+# 10. ПОЛНАЯ ПРОВЕРКА ТЕКУЩЕЙ ПОЛИТИКИ
+#############################
+
+sudo samba-tool domain passwordsettings show
+
+```
+
+</details>
+
 </details>
 
 <details>

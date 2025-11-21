@@ -861,6 +861,14 @@ expand-hosts
 log-queries
 log-facility=/var/log/dnsmasq.log
 
+# ————— A-записи ————— # (если отказываетесь от expand-hosts)
+# address=/имя/IPv4
+
+address=/router.home.lan/192.168.0.1
+address=/server.home.lan/192.168.0.10
+address=/nas.home.lan/192.168.0.20
+address=/pc1.home.lan/192.168.0.50
+
 # ————— DHCP —————
 
 # Включаем DHCP-сервер
@@ -975,13 +983,18 @@ group=nogroup
 | 136–254 | Разные расширения производителей | —                               |
 |     255 | End                              | Конец списка опций              |
 
+
+</details>
+
 После этого запускаем dnsmasq
 
 ```bash
 systemctl enable --now dnsmasq
 ```
 
-</details>
+P.S.
+
+Параметр <code>expand-hosts</code> в dnsmasq позволяет не прописывать <code>address=</code> в конфигурации. Когда <code>expand-hosts</code> включён, dnsmasq автоматически создаёт DNS-записи на основе файла <code>/etc/hosts</code>, добавляя к ним локальный домен, указанный в параметре <code>domain</code>. Например, если в <code>/etc/hosts</code> записано <code>192.168.0.10 server</code>, а в dnsmasq задано <code>domain=home.lan</code>, то dnsmasq автоматически создаст записи <code>server</code> и <code>server.home.lan</code>, обе указывающие на IP 192.168.0.10. Поэтому A-записи через <code>address=</code> в таком случае не нужны - dnsmasq сам формирует полноценные локальные DNS-имена. Дополнительно, при включённом <code>localise-queries</code> генерируются и соответствующие PTR-записи для обратного разрешения. Использовать <code>address=</code> имеет смысл только тогда, когда нужно задать IP-адрес, отсутствующий в <code>/etc/hosts</code>, создать wildcard-запись или настроить перенаправление домена. Во всех остальных случаях <code>/etc/hosts + expand-hosts</code> полностью покрывают задачу локального DNS без необходимости прописывать каждую запись вручную.
 
 </details>
 

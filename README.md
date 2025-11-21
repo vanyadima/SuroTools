@@ -19,7 +19,7 @@
 
 ```bash
 apt-get update
-apt-get install bash-completion etcnet-full iptables nano 
+apt-get install bash-completion etcnet-full iptables nano sudo
 ```
     
 </details>
@@ -146,12 +146,14 @@ dhcpd -t -cf /etc/dhcp/dhcpd.conf
 Создание и настройка /etc/default/isc-dhcp-server
 
 ```bash
-DHCP_CONF=/etc/dhcp/dhcpd.conf
-DHCP_PID=/var/run/dhcpd.pid
-DHCP_OPTS="-4"
-INTERFACEv4="<ens34>"
+#DHCP_CONF=/etc/dhcp/dhcpd.conf
+#DHCP_PID=/var/run/dhcpd.pid
+#DHCP_OPTS="-4"
+INTERFACEv4="<инт, который будет раздавать ip>"
 INTERFACEv6=""
 ```
+
+Если DHCP не заработает - то расскомментируете эти строчки
 
 > DHCP_CONF=/etc/dhcp/dhcpd.conf - путь к основному конфигурационному файлу
 >
@@ -852,7 +854,7 @@ cache-size=1000
 
 # Форвардинг DNS (провайдер, DoH, локальный резолвер)
 
-server=77.88.8.8  # МЫ ЛЮБИМ ЯНДЕКС
+server=77.88.8.8 
 
 # Разрешаем использование /etc/hosts
 expand-hosts
@@ -1165,6 +1167,71 @@ reboot
 ```
 
 </details>
+
+</details>
+
+<details>
+<summary>OpenSSH</summary>
+
+OpenSSH - это стандартный инструмент для безопасного удалённого подключения к серверу. Он шифрует весь трафик, защищая ваши данные от посторонних глаз, и позволяет управлять сервером с любого устройства.
+
+Устанавливаем на устройства, куда нужно
+
+```bash
+sudo apt install openssh-common
+sudo systemctl enable --now sshd
+```
+
+Редактируем файл /etc/openssh/sshd_config на машине, к которой будем подключаться
+
+```bash
+PasswordAuthentication yes
+// По желанию можете поменять port, AllowUsers (белый список) и так далее.
+```
+
+<details>
+<summary>Подключение по ключу</summary>
+
+Генерируем с клиентской машины(откуда будем подключаться) ключ
+
+```bash
+ssh-keygen
+```
+
+Копируем публичный ключ на машину, к которой будем подключаться
+
+```bash
+ssh-copy-id -i ~/.ssh/id.pub пользователь@сервер
+```
+
+Настройка sshd_config 
+
+```bash
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+PasswordAuthentication yes  # можно отключить после проверки ключей
+```
+
+--
+
+</details>
+
+Создаем и добавляем пользователя
+
+```bash
+useradd -mg users -G wheel <имя пользователя> 
+passwd <имя пользователя> 
+```
+
+Расскомментируем строчку в /etc/sudoers
+
+```bash
+%wheel ALL=(ALL:ALL) ALL
+```
+После настройки перезагружаем sshd
+```bash
+sudo systemctl restart sshd
+```
 
 </details>
 

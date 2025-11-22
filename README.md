@@ -1413,6 +1413,84 @@ sudo systemctl restart sshd
 
 </details>
 
+<details>
+<summary>mdadm</summary>
+    
+mdadm — это утилита для создания, управления и мониторинга программных RAID-массивов на Linux. Она поддерживает все популярные уровни RAID: 0, 1, 4, 5, 6, 10 и т. д.
+
+Основные функции mdadm:
+
+>Создание RAID-массивов (--create)
+>
+>Добавление/удаление дисков (--add, --remove)
+>
+>Проверка состояния массива (--detail, /proc/mdstat)
+>
+>Сборка существующих массивов (--assemble)
+>
+>Мониторинг с уведомлением (--monitor)
+
+<details>
+<summary>Команды для разных уровней RAID</summary>
+
+| RAID    | Команда шаблона                                                                           |
+| ------- | ----------------------------------------------------------------------------------------- |
+| RAID 0  | `mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/sdb /dev/sdc`                    |
+| RAID 1  | `mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sdb /dev/sdc`                    |
+| RAID 5  | `mdadm --create /dev/md0 --level=5 --raid-devices=3 /dev/sdb /dev/sdc /dev/sdd`           |
+| RAID 6  | `mdadm --create /dev/md0 --level=6 --raid-devices=4 /dev/sdb /dev/sdc /dev/sdd /dev/sde`  |
+| RAID 10 | `mdadm --create /dev/md0 --level=10 --raid-devices=4 /dev/sdb /dev/sdc /dev/sdd /dev/sde` |
+
+</details>
+
+Допустим, у нас есть 3 диска и мы хотим сделать RAID-5
+
+```bash
+sudo mdadm --create --verbose /dev/md0 --level=5 --raid-devices=3 /dev/sdb /dev/sdc /dev/sdd
+```
+
+>/dev/md0 — имя создаваемого массива
+>
+>--level=5 — уровень RAID (0, 1, 5, 6, 10…)
+>
+>--raid-devices=N — количество дисков
+>
+>Список дисков — /dev/sdX
+
+Проверка состояния RAID
+
+```bash
+cat /proc/mdstat
+sudo mdadm --detail /dev/md0
+```
+
+Создание файловой системы
+
+```bash
+sudo mkfs.ext4 /dev/md0
+```
+
+Монтирование
+
+```bash
+sudo mkdir /mnt/raid5
+sudo mount /dev/md0 /mnt/raid5
+```
+
+Чтобы RAID монтировался автоматически при загрузке, добавьте запись в /etc/fstab
+
+```bash
+/dev/md0   /mnt/raid5   ext4   defaults   0 0
+```
+
+Сохранение конфигурации mdadm
+
+```bash
+sudo mdadm --detail --scan >> /etc/mdadm.conf
+```
+
+</details>
+
 </details>
 
 <details>

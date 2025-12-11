@@ -2279,6 +2279,223 @@ apt-get install –y yandex-browser-stable
 
 </details>
 
+<details>
+<summary>Zabbix</summary>
+
+<details>
+<summary>MariaDB</summary>
+
+Устанавливаем СУБД
+
+```bash
+apt-get install mariadb-server zabbix-server-mysql fping
+systemctl enable --now mysqld
+```
+
+Создаем БД Zabbix и пользователя
+
+```bash
+mysql -uroot -p
+Enter password: # можно пропустить
+MariaDB [(none)]> create database zabbix character set utf8 collate utf8_bin;
+MariaDB [(none)]> grant all privileges on zabbix.* to zabbix@localhost identified by '<пароль>';
+MariaDB [(none)]> quit;
+```
+
+Добавляем в БД данные для веб интерфейса (важно соблюдать порядок ввода команд)
+
+```bash
+mysql -uzabbix -p<пароль> zabbix < /usr/share/doc/zabbix-common-database-mysql-*/schema.sql
+mysql -uzabbix -p<пароль> zabbix < /usr/share/doc/zabbix-common-database-mysql-*/images.sql 
+mysql -uzabbix -p<пароль> zabbix < /usr/share/doc/zabbix-common-database-mysql-*/data.sql
+```
+
+Устанавливаем apache2
+
+```bash
+apt-get install apache2 apache2-mod_php8.2
+systemctl enable --now httpd2
+apt-get install php8.2 php8.2-mbstring php8.2-sockets php8.2-gd php8.2-xmlreader php8.2-mysqlnd-mysqli php8.2-ldap php8.2-openssl
+```
+
+Меняем опции в <code>etc/php/8.2/apache2-mod_php/php.ini</code>
+
+```bash
+memory_limit = 256M
+post_max_size = 32M
+max_execution_time = 600
+max_input_time = 600
+date.timezone = Europe/Moscow (регион вписать свой)
+always_populate_raw_post_data = -1
+```
+
+Перезагружаем
+
+```bash
+systemctl restart httpd2
+```
+Редактируем <code>/etc/zabbix/zabbix_server.conf</code>
+
+```bash
+DBHost=localhost
+DBName=zabbix
+DBUser=zabbix
+DBPassword=Пароль
+```
+
+```bash
+systemctl enable --now zabbix_mysql
+```
+
+Установка web интерфейса
+
+```bash
+apt-get install zabbix-phpfrontend-apache2 zabbix-phpfrontend-php8.2
+ln -s /etc/httpd2/conf/addon.d/A.zabbix.conf /etc/httpd2/conf/extra-enabled/
+systemctl restart httpd2
+chown apache2:apache2 /var/www/webapps/zabbix/ui/conf
+```
+
+Заходим на сайт <ip сервера>/zabbix и подключаемся к БД, вводим пароль от БД
+
+Логин и пароль для входа по умолчанию
+
+```
+Логин: Admin
+Пароль: zabbix
+```
+
+</details>
+
+<details>
+<summary>PostgreSQL</summary>
+
+
+Устанавливаем СУБД
+
+```bash
+apt-get install postgresql16-server zabbix-server-pgsql fping
+```
+
+Создаем системные базы данных и включаем в автозапуск
+
+```bash
+/etc/init.d/postgresql initdb
+systemctl enable --now postgresql
+```
+
+Создаем БД Zabbix и пользователя
+
+```bash
+su - postgres -s /bin/sh -c 'createuser --no-superuser --no-createdb --no-createrole --encrypted --pwprompt zabbix'
+Введите пароль для новой роли: 
+Повторите его:
+su - postgres -s /bin/sh -c 'createdb -O zabbix zabbix'
+```
+
+Добавляем в БД данные для веб интерфейса (важно соблюдать порядок ввода команд)
+
+```bash
+su - postgres -s /bin/sh -c 'psql -U zabbix -f /usr/share/doc/zabbix-common-database-pgsql-*/schema.sql zabbix'
+su - postgres -s /bin/sh -c 'psql -U zabbix -f /usr/share/doc/zabbix-common-database-pgsql-*/images.sql zabbix'
+su - postgres -s /bin/sh -c 'psql -U zabbix -f /usr/share/doc/zabbix-common-database-pgsql-*/data.sql zabbix'
+```
+
+Устанавливаем apache2
+
+```bash
+apt-get install apache2 apache2-mod_php8.2
+systemctl enable --now httpd2
+apt-get install php8.2 php8.2-mbstring php8.2-sockets php8.2-gd php8.2-xmlreader php8.2-pgsql php8.2-ldap php8.2-openssl
+```
+
+Меняем опции в <code>etc/php/8.2/apache2-mod_php/php.ini</code>
+
+```bash
+memory_limit = 256M
+post_max_size = 32M
+max_execution_time = 600
+max_input_time = 600
+date.timezone = Europe/Moscow (регион вписать свой)
+always_populate_raw_post_data = -1
+```
+
+Перезагружаем
+
+```bash
+systemctl restart httpd2
+```
+Редактируем <code>/etc/zabbix/zabbix_server.conf</code>
+
+```bash
+DBHost=localhost
+DBName=zabbix
+DBUser=zabbix
+DBPassword=Пароль
+```
+
+```bash
+systemctl enable --now zabbix_mysql
+```
+
+Установка web интерфейса
+
+```bash
+apt-get install zabbix-phpfrontend-apache2 zabbix-phpfrontend-php8.2
+ln -s /etc/httpd2/conf/addon.d/A.zabbix.conf /etc/httpd2/conf/extra-enabled/
+systemctl restart httpd2
+chown apache2:apache2 /var/www/webapps/zabbix/ui/conf
+```
+
+Заходим на сайт <ip сервера>/zabbix и подключаемся к БД, вводим пароль от БД
+
+Логин и пароль для входа по умолчанию
+
+```
+Логин: Admin
+Пароль: zabbix
+```
+
+</details>
+
+<details>
+<summary>Подключение клиента</summary>
+
+Устанавливаем
+
+```bash
+apt-get install zabbix-agent
+```
+
+Редактируем конфиг
+
+```bash
+nano /etc/zabbix/zabbix_agentd.conf
+```
+
+```bash
+Server=<ip сервера>
+ServerActive=<ip сервера>
+Hostname=<назв комп>
+```
+
+Заходим на сайт, добавляем узел сети
+
+* Мониторинг -> Узел сети
+
+* Создаем узел сети
+
+* В шаблонах ищем Templates, нажимаем поиск и выбираем Linux by Zabbix agent
+
+* Добавляем группу Discovered hosts
+
+* Вписываем IP компьютера
+
+
+</details>
+
+</details>
+
 </details>
 
 <details>

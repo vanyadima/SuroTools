@@ -2496,6 +2496,75 @@ Hostname=<назв комп>
 
 </details>
 
+<details>
+<summary>Fail2ban</summary>
+
+Fail2ban — это утилита для защиты серверов от атак методом перебора 
+
+Установка
+
+```bash
+apt-get install fail2ban python3-module-systemd
+```
+
+ALT Linux использует systemd, она не пишет текстовые логи в /var/log, поэтому для переключения на systemd нужно установить пакет python3-module-systemd  
+
+В <code>/etc/fail2ban/jail.conf</code> в секции INCLUDES заменяем
+
+```bash
+before = paths-altlinux.conf
+```
+
+на
+
+```bash
+before = paths-altlinux-systemd.conf
+```
+
+Структура fail2ban
+
+```bash
+/etc/fail2ban/
+├── fail2ban.conf          # Настройки демона
+├── jail.conf             # Базовые настройки
+├── jail.d
+│    └── sshd.conf        # ВАШ КОНФИГ ХРАНИТСЯ ТУТ!
+├── filter.d/
+│   └── sshd.conf         # Фильтр для анализа логов SSH
+└── action.d/
+    └── iptables.conf     # Действие: блокировка через iptables
+```
+
+### Минимальная настройка 
+
+Представим, нам нужно указать порт ssh, поставить таймер бана (на 10 секунд) и указать количество попыток (3 попытки)
+
+Создаем файл sshd.conf в директории jail.d
+
+```bash
+nano /etc/fail2ban/jail.d/sshd.conf
+```
+
+В нём пишем следующее
+
+```bash
+[sshd]
+enabled = true
+port = 22
+maxretry = 3
+bantime = 10
+findtime = 60 # время попыток ввода
+```
+
+Перезагружаем fail2ban и добавляем в автозапуск
+
+```bash
+systemctl restart fail2ban
+systemctl enable fail2ban
+```
+
+</details>
+
 </details>
 
 <details>

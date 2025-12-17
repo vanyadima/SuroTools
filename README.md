@@ -554,295 +554,162 @@ systemctl enable --now rsyslog
 
 ```bash
 apt-get install bind bind-utils
-systemctl start bind
 ```
 
-BIND создаёт стандартную структуру файлов и каталогов (в ALT Linux она очень похожа на Fedora/CentOS-подобную):
+Структура каталога bind
 
-| Назначение                             | Расположение           | Комментарий                                |
-| -------------------------------------- | ---------------------- | ------------------------------------------ |
-| Основной конфиг                        | `/etc/named.conf`      | Главный файл, который подключает остальные |
-| Каталог с дополнительными конфигациями | `/etc/named/`          | Можно хранить зоны, ACL, logging и т.п.    |
-| Каталог с зонами                       | `/var/named/`          | По умолчанию сюда кладут файлы зон         |
-| PID-файл                               | `/run/named/named.pid` | Путь, где хранится PID процесса            |
-| Логи (если не через systemd)           | `/var/log/named/`      | Можно задать в секции `logging`            |
-| Пользователь демона                    | `named`                | Отдельный системный пользователь           |
+```bind
+/etc/bind/
+├── named.conf              # главный конфигурационный файл (include остальных)
+├── options.conf            # глобальные параметры BIND
+├── local.conf              # описание локальных зон (master/slave)
+├── bind.keys               # корневые DNSSEC ключи (trust anchors)
+├── rfc1912.conf            # стандартные служебные зоны (localhost и др.)
+├── rfc1918.conf            # зоны для частных IP-адресов (RFC1918)
+├── zone/                   # каталог файлов DNS-зон
+│   ├── localhost           # прямая зона localhost
+│   ├── localdomain         # прямая зона localdomain
+│   ├── empty               # пустая зона-заглушка
+│   ├── managed-keys.bind   # управляемые DNSSEC ключи
+│   ├── managed-keys.bind.jnl # журнал изменений DNSSEC ключей
+│   ├── slave/              # каталог slave-зон (получаемых с master)
+│   └── 127.in-addr.arpa    # обратная зона loopback (127.0.0.1)
+└── rndc.key                # ключ для управления BIND через rndc
+
+```
 
 <details>
-<summary>Секции</summary>
-
-<details>
-<summary>Главынй файл named.conf</summary>
+<summary>Базовая настройка options.conf</summary>
 
 ```bash
-options {
-    directory "/var/named";              // рабочая директория BIND
-    listen-on port 53 { 127.0.0.1; 192.168.122.1; };   // конкретные IP (не CIDR)
-    listen-on-v6 { ::1; };
-    allow-query { 192.168.122.0/24; localhost; };     // кто может делать запросы
-    recursion yes;                   // включаем рекурсию (если нужен локальной сети)
-    allow-recursion { 192.168.122.0/24; localhost; }; // кто может использовать кэш
-    forwarders { 8.8.8.8; 8.8.4.4; };  // форвардеры (если нужно)
-    dnssec-validation auto;
-    auth-nxdomain no;    // conform to RFC1035
-};
-
-// Доп. файлы в /etc/named.conf!!!
-include "/etc/named/named.conf.local";
-include "/etc/named/named.conf.log";
-include "/etc/named/named.conf.acl";
+listen-on { any; };
+allow-query { any; };
+allow-recursion { any; };
+forwarders { 77.88.8.8; };
+recursion yes;
 ```
-
-| Опция               | Назначение                                | Пример / Комментарий                                                      |
-| ------------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
-| `directory`         | Рабочая директория BIND                   | `directory "/var/named";` — все относительные пути в зонах берутся отсюда |
-| `listen-on`         | IPv4-адреса, на которых слушает DNS-демон | `listen-on port 53 { 127.0.0.1; 192.168.122.1; };`                        |
-| `listen-on-v6`      | IPv6 интерфейсы                           | `listen-on-v6 { any; };`                                                  |
-| `allow-query`       | Кто может делать запросы к DNS            | `allow-query { localhost; 192.168.122.0/24; };`                           |
-| `recursion`         | Включает рекурсивные запросы              | `recursion yes;`                                                          |
-| `allow-recursion`   | Кто может использовать кэш                | `allow-recursion { localhost; 192.168.122.0/24; };`                       |
-| `forwarders`        | Куда пересылать неизвестные запросы       | `forwarders { 8.8.8.8; 8.8.4.4; };`                                       |
-| `dnssec-validation` | Проверка DNSSEC                           | `dnssec-validation auto;`                                                 |
-| `auth-nxdomain`     | Поведение при NXDOMAIN                    | `auth-nxdomain no;`                                                       |
-| `version`           | Можно скрыть версию сервера               | `version "ALT-DNS";`                                                      |
 
 </details>
 
 <details>
-<summary>Секция logging named.conf.log</summary>
+<summary>Базовая настройка local.conf</summary>
+
+Создание локальных зон
 
 ```bash
-logging {
-    channel default_debug {
-        file "/var/log/named/debug.log" versions 3 size 5m;
-        severity dynamic;
-        print-time yes;
-        print-category yes;
-        print-severity yes;
-    };
-    category default { default_debug; };
-    category queries { default_debug; };
-    category resolver { default_debug; };
+zone "ZONE_NAME" {                  # имя зоны (например: "domentest" или "100.168.192.in-addr.arpa")
+    type TYPE;                       # тип зоны: master или slave
+    file "ZONE_FILE_PATH";           # путь к файлу зоны (относительно /etc/bind/)
 };
 ```
 
-| Строка / параметр                       | Назначение                                      | Пример значения                       | Пояснение                                                                      |
-| --------------------------------------- | ----------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------ |
-| `logging {`                             | Начало блока журналирования                     | —                                     | Все настройки логов помещаются внутрь фигурных скобок.                         |
-| `channel default_debug {`               | Определение канала (канал = поток вывода логов) | —                                     | Можно создать несколько каналов (например, `queries`, `security`, `resolver`). |
-| `file "/var/log/named/debug.log"`       | Куда писать логи                                | `/var/log/named/debug.log`            | Задаёт путь к файлу лога. Файл должен быть доступен пользователю `named`.      |
-| `versions 3`                            | Хранить несколько копий                         | `3`                                   | Хранит 3 старые версии лога, автоматически создавая ротацию.                   |
-| `size 5m`                               | Максимальный размер файла                       | `5m`                                  | При достижении 5 МБ создаётся новая версия.                                    |
-| `severity dynamic;`                     | Уровень важности                                | `dynamic`, `info`, `warning`, `error` | `dynamic` — уровень управляется командой `rndc trace`.                         |
-| `print-time yes;`                       | Добавлять время в лог                           | `yes`                                 | Помогает при отладке.                                                          |
-| `print-category yes;`                   | Добавлять категорию (queries, resolver и т.д.)  | `yes`                                 | Удобно при анализе.                                                            |
-| `print-severity yes;`                   | Добавлять уровень важности                      | `yes`                                 | В логах будет видно INFO/WARN/ERR.                                             |
-| `};`                                    | Конец описания канала                           | —                                     | Закрывает блок `channel`.                                                      |
-| `category default { default_debug; };`  | Привязка категории к каналу                     | —                                     | Категория `default` (всё подряд) будет писать в канал `default_debug`.         |
-| `category queries { default_debug; };`  | Логирование DNS-запросов                        | —                                     | Очень полезно для анализа активности.                                          |
-| `category resolver { default_debug; };` | Логирование резолвера                           | —                                     | Показывает, как BIND обрабатывает рекурсивные запросы.                         |
-| `};`                                    | Конец секции logging                            | —                                     | Завершение блока.                                                              |
-
-</details>
-
-<details>
-<summary>Секция acl named.conf.acl</summary>
+Пример прмяой зоны
 
 ```bash
-acl "trusted" {
-    127.0.0.1;
-    192.168.122.0/24;
-};
-
-options {
-    allow-query { trusted; };
-    allow-recursion { trusted; };
-};
-```
-
-| Строка                          | Значение                        | Пояснение                               |
-| ------------------------------- | ------------------------------- | --------------------------------------- |
-| `acl "trusted" {`               | Объявление списка доверенных IP | Имя списка — `"trusted"`.               |
-| `127.0.0.1;`                    | Локальный хост                  | Разрешает DNS-доступ с localhost.       |
-| `192.168.122.0/24;`             | Вся подсеть                     | Разрешает DNS-доступ из локальной сети. |
-| `};`                            | Конец ACL                       | Закрывает список IP.                    |
-| `allow-query { trusted; };`     | Кто может делать DNS-запросы    | Только IP из ACL `"trusted"`.           |
-| `allow-recursion { trusted; };` | Кто может пользоваться кэшем    | Тоже только доверенные.                 |
-
-</details>
-
-<details>
-<summary>Секция локальных зон named.conf.local</summary>
-
-```bash
-zone "example.local" IN {
+zone "domentest" {
     type master;
-    file "zones/db.example.local";
-    allow-update { none; };
+    file "zone/domentest.db";
 };
 
-zone "122.168.192.in-addr.arpa" IN {
+```
+
+Пример обратной зоны
+
+```bash
+zone "11.168.192.in-addr.arpa" {
     type master;
-    file "zones/db.192.168.122";
-    allow-update { none; };
+    file "zone/100.168.192.in-addr.arpa";
 };
-```
 
-| Строка                                 | Значение                    | Пояснение                              |
-| -------------------------------------- | --------------------------- | -------------------------------------- |
-| `zone "example.local" IN {`            | Начало описания прямой зоны | DNS-зона `example.local`.              |
-| `type master;`                         | Тип зоны                    | Сервер хранит оригинальные данные.     |
-| `file "zones/db.example.local";`       | Путь к файлу зоны           | Относительно `directory` из `options`. |
-| `allow-update { none; };`              | Динамические обновления     | Отключены (безопасно по умолчанию).    |
-| `};`                                   | Конец зоны                  | Закрытие блока.                        |
-| `zone "122.168.192.in-addr.arpa" IN {` | Начало обратной зоны        | Для IP-сети 192.168.122.0/24.          |
-| `file "zones/db.192.168.122";`         | Файл обратной зоны          | PTR-записи IP → имя.                   |
+```
 
 </details>
 
 <details>
-<summary>Создание прямых и обраных зон</summary>
+<summary>Создание файлов зон</summary>
 
-Назовем прямую зону db.example.local к примеру
+Берем шаблоны с localhost и 127.in-addr.arpa и назначаем владельца
 
 ```bash
-$TTL 86400
-@   IN  SOA ns1.example.local. admin.example.local. (
-        2025110101 ; serial
-        3600       ; refresh
-        1800       ; retry
-        604800     ; expire
-        86400 )    ; minimum
+cp /etc/bind/zone/{localhost,domaintest.db}
+cp /etc/bind/zone/{127.in-addr.arpa,100.168.192.in-addr.arpa}
 
-    IN  NS  ns1.example.local.
-ns1 IN  A   192.168.122.10
-www IN  A   192.168.122.20
-mail IN  A   192.168.122.30
-@   IN  MX  10 mail.example.local.
+chown named:named /etc/bind/zone/domaintest.db
+chown named:named /etc/bind/zone/100.168.192.in-addr.arpa
 ```
 
-| Строка                                           | Значение                         | Пояснение                                                             |
-| ------------------------------------------------ | -------------------------------- | --------------------------------------------------------------------- |
-| `$TTL 86400`                                     | Time To Live                     | TTL 1 день — время кэширования записей.                               |
-| `@`                                              | Текущий домен (`example.local.`) | Символ `@` — замена имени зоны.                                       |
-| `IN SOA ns1.example.local. admin.example.local.` | Начало записи SOA                | Указывает основной DNS и e-mail администратора (точка вместо `@`).    |
-| `2025110101`                                     | Серийный номер                   | Обновляется при каждом изменении.                                     |
-| `3600`                                           | Refresh                          | Вторичные серверы проверяют обновления каждые 1 ч.                    |
-| `1800`                                           | Retry                            | Если не получилось — повтор через 30 мин.                             |
-| `604800`                                         | Expire                           | Через неделю вторичный сервер “забудет” зону, если мастер недоступен. |
-| `86400`                                          | Minimum                          | Минимальное TTL для отрицательных ответов.                            |
-| `IN NS ns1.example.local.`                       | Сервер имён для зоны             | Основной NS.                                                          |
-| `ns1 IN A 192.168.122.10`                        | Адрес DNS-сервера                | ns1.example.local → 192.168.122.10                                    |
-| `www IN A 192.168.122.20`                        | Веб-сервер                       | [www.example.local](http://www.example.local) → 192.168.122.20        |
-| `mail IN A 192.168.122.30`                       | Почтовый сервер                  | mail.example.local → 192.168.122.30                                   |
-| `@ IN MX 10 mail.example.local.`                 | Почтовая запись                  | Приоритет 10, сервер `mail.example.local`.                            |
-
-Обратная зона - db.192.168.122
+Шаблон файла зоны
 
 ```bash
-$TTL 86400
-@   IN  SOA ns1.example.local. admin.example.local. (
-        2025110101 ; serial
-        3600
-        1800
-        604800
-        86400 )
+$TTL <TTL_VALUE>              # Время жизни записей, например: 1D = 1 день
+@   IN  SOA <PRIMARY_DNS>.<DOMAIN>. <ADMIN_EMAIL>. (
+        <SERIAL_NUMBER>      ; Серийный номер зоны, формат YYYYMMDDnn
+        <REFRESH>            ; Интервал обновления для slave (например: 1H)
+        <RETRY>              ; Интервал повторной попытки при ошибке (например: 15M)
+        <EXPIRE>             ; Время истечения у slave (например: 1W)
+        <MINIMUM> )          ; Минимальное TTL для отрицательных ответов (например: 1D)
 
-    IN  NS  ns1.example.local.
-10  IN  PTR ns1.example.local.
-20  IN  PTR www.example.local.
-30  IN  PTR mail.example.local.
+    IN  NS  <PRIMARY_DNS>.<DOMAIN>.   # Основной DNS-сервер зоны
+
+<HOSTNAME_1>  IN  A  <IP_ADDRESS_1>
+<HOSTNAME_2>  IN  A  <IP_ADDRESS_2>
+... (добавляйте по необходимости)
+
+<IP_LAST_OCTET>  IN  PTR  <HOSTNAME>.<DOMAIN>.
+
 ```
 
-| Строка                                             | Значение        | Пояснение                                                          |
-| -------------------------------------------------- | --------------- | ------------------------------------------------------------------ |
-| `$TTL 86400`                                       | TTL записей     | 1 день.                                                            |
-| `@ IN SOA ns1.example.local. admin.example.local.` | Начало зоны     | Та же структура, что и в прямой зоне.                              |
-| `2025110101`                                       | Серийный номер  | Номер версии зоны.                                                 |
-| `IN NS ns1.example.local.`                         | Сервер имён     | Авторитетный сервер для обратной зоны.                             |
-| `10 IN PTR ns1.example.local.`                     | Обратная запись | IP 192.168.122.10 → ns1.example.local.                             |
-| `20 IN PTR www.example.local.`                     | Обратная запись | IP 192.168.122.20 → [www.example.local](http://www.example.local). |
-| `30 IN PTR mail.example.local.`                    | Обратная запись | IP 192.168.122.30 → mail.example.local.                            |
-
-
-</details>
-
-</details>
-
-
-Для создания DNS-сервера в ALT Linux необходимо установить пакет BIND, создать и настроить его конфигурационные файлы.
-В главном файле указываются каталог зон, сетевые интерфейсы и разрешённые клиенты, а также включается рекурсия и задаются внешние форвардеры.
-Затем описываются зоны — основная и при необходимости обратная, после чего создаются соответствующие файлы зон с записями доменных имён и IP-адресов.
-По завершении настройки проверяется корректность конфигурации, после чего служба named запускается и включается в автозагрузку.
-
-<details>
-<summary>Проверка</summary>
-
-Структура директорий
+Прямая зона
 
 ```bash
-/etc/
- └── named.conf
- └── named/
-      ├── named.conf.acl
-      ├── named.conf.log
-      ├── named.conf.local
-      └── zones/
-           ├── db.example.local
-           └── db.192.168.122
-/var/log/named/
-/var/named/
+$TTL 1D
+@   IN  SOA dns.domaintest. root.domaintest. (
+        20251217
+        1H
+        15M
+        1W
+        1D )
+
+    IN  NS  dns.domaintest.
+
+dns IN  A   192.168.100.50
+
 ```
 
-| Действие                                              | Команда                                                                         | Назначение                                                                           |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Проверка синтаксиса основного конфигурационного файла | `sudo named-checkconf`                                                          | Проверяет правильность написания и структуру всех файлов конфигурации BIND.          |
-| Проверка прямой зоны                                  | `sudo named-checkzone example.local /var/named/zones/db.example.local`          | Проверяет корректность записей в файле прямой зоны (соответствие имён и IP-адресов). |
-| Проверка обратной зоны                                | `sudo named-checkzone 122.168.192.in-addr.arpa /var/named/zones/db.192.168.122` | Проверяет правильность обратных записей (соответствие IP-адресов именам).            |
-| Проверка запуска службы                               | `sudo systemctl start named`                                                    | Запускает DNS-сервер для тестирования.                                               |
-| Проверка состояния службы                             | `sudo systemctl status named`                                                   | Отображает текущее состояние и возможные ошибки при запуске.                         |
-| Проверка ответов DNS                                  | `dig @127.0.0.1 www.example.local`                                              | Проверяет, отвечает ли сервер на запросы и правильно ли разрешает имена.             |
-| Проверка обратного разрешения                         | `dig -x 192.168.122.20`                                                         | Тестирует корректность работы обратной зоны (PTR-записи).                            |
-
-
-</details>
-
-<details>
-<summary>Экспресс-настройка</summary>
-
-В /etc/named.conf 
+Обратная зона зона
 
 ```bash
-options {
-    directory "/var/named";
-    listen-on port 53 { any; };
-    allow-query { any; };
-    recursion yes;
-    forwarders { 8.8.8.8; 1.1.1.1; };
-    dnssec-validation auto;
-};
+$TTL 1D
+@   IN  SOA dns.domaintest. root.domaintest. (
+        20251217
+        1H
+        15M
+        1W
+        1D )
 
-zone "example.local" IN {
-    type master;
-    file "db.example.local";
-};
-```
+    IN  NS  dns.domaintest.
+10  IN  PTR dns.domaintest.
 
-В /var/named/db.example.local
-
-```bash
-$TTL 86400
-@   IN  SOA ns1.example.local. admin.example.local. (
-        1        ; serial
-        3600     ; refresh
-        1800     ; retry
-        604800   ; expire
-        86400 )  ; minimum
-
-    IN  NS  ns1.example.local.
 ```
 
 </details>
+
+После настройки всех конфигов нужно проверить на ошибки и указать DNS-настройки системы в /etc/resolv.conf
+
+```bash
+nameserver 127.0.0.1
+search domaintest
+```
+
+```bash
+named-checkconf -z
+```
+
+Если всё правильно, запускаем и добавляем в автозагрузку
+
+```bash
+systemctl enable --now bind
+```
 
 </details>
 

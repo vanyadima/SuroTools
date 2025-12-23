@@ -77,6 +77,17 @@ iptables -A	FORWARD	-i <интернет> -o <внут. инт> -j ACCEPT
 iptables -A	FORWARD	-i <внут. инт> -o <интернет> -n state --state ESTABLISHED,RELATED -j ACCEPT
 ```
 
+Безопасная настройка iptables:
+
+```bash
+iptables -t nat -A POSTROUTING -s <внут. ip сеть/маска> -o <интерфейс с выходом на интернет> -j MASQUERADE
+iptables -A	FORWARD	-i <интернет> -o <внут. инт>  -s <внут. ip сеть/маска> -j ACCEPT
+
+# Пример
+iptables -t nat -A POSTROUTING -s 192.168.1.0/24 -o ens33 -j MASQUERADE
+iptables -A	FORWARD	-i ens33 -o ens37 -s 192.168.1.0/24 -j ACCEPT
+```
+
 >iptables -t nat -A POSTROUTING -o <интерфейс с выходом на интернет> -j MASQUERADE - Прячет все внутренние компьютеры за своим внешним IP (Маскарадинг).
 >
 >iptables -A	FORWARD	-i <интернет> -o <внут. инт> -j ACCEPT - Позволяет внутренним компьютерам ходить в интернет.
@@ -2429,6 +2440,70 @@ findtime = 60 # время попыток ввода
 systemctl restart fail2ban
 systemctl enable fail2ban
 ```
+
+</details>
+
+<details>
+<summary>moodle</summary>
+
+### Настройка сервера
+
+Устанавливаем 
+
+```bash
+apt-get install moodle moodle-apache2 moodle-local-mysql
+systemctl enable --now mysqld
+```
+
+Создаем базу данных
+
+```bash
+mysql -u root
+CREATE DATABASE namedb DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,CREATE TEMPORARY TABLES,DROP,INDEX,ALTER ON moodledb.* TO moodle@localhost IDENTIFIED BY '<пароль>';
+quit;
+```
+
+Загружаем исходники
+
+```bash
+cd /opt
+git clone git://git.moodle.org/moodle.git
+cd /opt/moodle
+git branch -a
+git checkout <moodle_версия_stable>
+```
+
+Копируем в папку
+
+```bash
+cp -R /opt/moodle /var/www/html/
+```
+
+Выдаем все нужные права
+
+```bash
+mkdir /var/moodledata
+chown -R apache2:webmaster /var/moodledata
+chmod -R 777 /var/moodledata
+chmod ugoa=rwx /var/moodledata
+chmod -R 0755 /var/www/html/moodle
+```
+Теперь нужно раскомментировать и изменить параметр в <code>etc/php/8.2/apache2-mod_php/php.ini</code>
+
+```bash
+max_input_vars = 10000
+```
+
+Перезагружаем apache
+
+```bash
+systemctl restart httpd2
+```
+
+### Настройка на клиенте
+
+Заходим в бразуер, пишем <ip сервера/moodle>
 
 </details>
 

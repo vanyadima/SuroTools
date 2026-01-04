@@ -1,9 +1,10 @@
 # SuroTools
 
+> [!NOTE]
 > ⚙️ Данный репозиторий предназначен для системных администраторов и инженеров, работающих с Linux‑системами. Он объединяет инструменты, типовые конфигурации и сопроводительную документацию.
-
+> 
 > ⚙️ Основная цель — создать единое пространство для хранения и автоматизации ключевых операционных решений, упрощая повседневную работу с Linux.
-
+> 
 > ⚙️ Часть конфигураций была разработана мной, другие - собраны из открытых источников, проверены и адаптированы для практического использования.
 
 
@@ -75,6 +76,17 @@ systemctl enable iptables
 iptables -t nat -A POSTROUTING -o <интерфейс с выходом на интернет> -j MASQUERADE
 iptables -A	FORWARD	-i <интернет> -o <внут. инт> -j ACCEPT
 iptables -A	FORWARD	-i <внут. инт> -o <интернет> -n state --state ESTABLISHED,RELATED -j ACCEPT
+```
+
+Безопасная настройка iptables:
+
+```bash
+iptables -t nat -A POSTROUTING -s <внут. ip сеть/маска> -o <интерфейс с выходом на интернет> -j MASQUERADE
+iptables -A	FORWARD	-i <интернет> -o <внут. инт>  -s <внут. ip сеть/маска> -j ACCEPT
+
+# Пример
+iptables -t nat -A POSTROUTING -s 192.168.1.0/24 -o ens33 -j MASQUERADE
+iptables -A	FORWARD	-i ens33 -o ens37 -s 192.168.1.0/24 -j ACCEPT
 ```
 
 >iptables -t nat -A POSTROUTING -o <интерфейс с выходом на интернет> -j MASQUERADE - Прячет все внутренние компьютеры за своим внешним IP (Маскарадинг).
@@ -554,295 +566,162 @@ systemctl enable --now rsyslog
 
 ```bash
 apt-get install bind bind-utils
-systemctl start bind
 ```
 
-BIND создаёт стандартную структуру файлов и каталогов (в ALT Linux она очень похожа на Fedora/CentOS-подобную):
+Структура каталога bind
 
-| Назначение                             | Расположение           | Комментарий                                |
-| -------------------------------------- | ---------------------- | ------------------------------------------ |
-| Основной конфиг                        | `/etc/named.conf`      | Главный файл, который подключает остальные |
-| Каталог с дополнительными конфигациями | `/etc/named/`          | Можно хранить зоны, ACL, logging и т.п.    |
-| Каталог с зонами                       | `/var/named/`          | По умолчанию сюда кладут файлы зон         |
-| PID-файл                               | `/run/named/named.pid` | Путь, где хранится PID процесса            |
-| Логи (если не через systemd)           | `/var/log/named/`      | Можно задать в секции `logging`            |
-| Пользователь демона                    | `named`                | Отдельный системный пользователь           |
+```bind
+/etc/bind/
+├── named.conf              # главный конфигурационный файл (include остальных)
+├── options.conf            # глобальные параметры BIND
+├── local.conf              # описание локальных зон (master/slave)
+├── bind.keys               # корневые DNSSEC ключи (trust anchors)
+├── rfc1912.conf            # стандартные служебные зоны (localhost и др.)
+├── rfc1918.conf            # зоны для частных IP-адресов (RFC1918)
+├── zone/                   # каталог файлов DNS-зон
+│   ├── localhost           # прямая зона localhost
+│   ├── localdomain         # прямая зона localdomain
+│   ├── empty               # пустая зона-заглушка
+│   ├── managed-keys.bind   # управляемые DNSSEC ключи
+│   ├── managed-keys.bind.jnl # журнал изменений DNSSEC ключей
+│   ├── slave/              # каталог slave-зон (получаемых с master)
+│   └── 127.in-addr.arpa    # обратная зона loopback (127.0.0.1)
+└── rndc.key                # ключ для управления BIND через rndc
+
+```
 
 <details>
-<summary>Секции</summary>
-
-<details>
-<summary>Главынй файл named.conf</summary>
+<summary>Базовая настройка options.conf</summary>
 
 ```bash
-options {
-    directory "/var/named";              // рабочая директория BIND
-    listen-on port 53 { 127.0.0.1; 192.168.122.1; };   // конкретные IP (не CIDR)
-    listen-on-v6 { ::1; };
-    allow-query { 192.168.122.0/24; localhost; };     // кто может делать запросы
-    recursion yes;                   // включаем рекурсию (если нужен локальной сети)
-    allow-recursion { 192.168.122.0/24; localhost; }; // кто может использовать кэш
-    forwarders { 8.8.8.8; 8.8.4.4; };  // форвардеры (если нужно)
-    dnssec-validation auto;
-    auth-nxdomain no;    // conform to RFC1035
-};
-
-// Доп. файлы в /etc/named.conf!!!
-include "/etc/named/named.conf.local";
-include "/etc/named/named.conf.log";
-include "/etc/named/named.conf.acl";
+listen-on { any; };
+allow-query { any; };
+allow-recursion { any; };
+forwarders { 77.88.8.8; };
+recursion yes;
 ```
-
-| Опция               | Назначение                                | Пример / Комментарий                                                      |
-| ------------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
-| `directory`         | Рабочая директория BIND                   | `directory "/var/named";` — все относительные пути в зонах берутся отсюда |
-| `listen-on`         | IPv4-адреса, на которых слушает DNS-демон | `listen-on port 53 { 127.0.0.1; 192.168.122.1; };`                        |
-| `listen-on-v6`      | IPv6 интерфейсы                           | `listen-on-v6 { any; };`                                                  |
-| `allow-query`       | Кто может делать запросы к DNS            | `allow-query { localhost; 192.168.122.0/24; };`                           |
-| `recursion`         | Включает рекурсивные запросы              | `recursion yes;`                                                          |
-| `allow-recursion`   | Кто может использовать кэш                | `allow-recursion { localhost; 192.168.122.0/24; };`                       |
-| `forwarders`        | Куда пересылать неизвестные запросы       | `forwarders { 8.8.8.8; 8.8.4.4; };`                                       |
-| `dnssec-validation` | Проверка DNSSEC                           | `dnssec-validation auto;`                                                 |
-| `auth-nxdomain`     | Поведение при NXDOMAIN                    | `auth-nxdomain no;`                                                       |
-| `version`           | Можно скрыть версию сервера               | `version "ALT-DNS";`                                                      |
 
 </details>
 
 <details>
-<summary>Секция logging named.conf.log</summary>
+<summary>Базовая настройка local.conf</summary>
+
+Создание локальных зон
 
 ```bash
-logging {
-    channel default_debug {
-        file "/var/log/named/debug.log" versions 3 size 5m;
-        severity dynamic;
-        print-time yes;
-        print-category yes;
-        print-severity yes;
-    };
-    category default { default_debug; };
-    category queries { default_debug; };
-    category resolver { default_debug; };
+zone "ZONE_NAME" {                  # имя зоны (например: "domentest" или "100.168.192.in-addr.arpa")
+    type TYPE;                       # тип зоны: master или slave
+    file "ZONE_FILE_PATH";           # путь к файлу зоны (относительно /etc/bind/)
 };
 ```
 
-| Строка / параметр                       | Назначение                                      | Пример значения                       | Пояснение                                                                      |
-| --------------------------------------- | ----------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------ |
-| `logging {`                             | Начало блока журналирования                     | —                                     | Все настройки логов помещаются внутрь фигурных скобок.                         |
-| `channel default_debug {`               | Определение канала (канал = поток вывода логов) | —                                     | Можно создать несколько каналов (например, `queries`, `security`, `resolver`). |
-| `file "/var/log/named/debug.log"`       | Куда писать логи                                | `/var/log/named/debug.log`            | Задаёт путь к файлу лога. Файл должен быть доступен пользователю `named`.      |
-| `versions 3`                            | Хранить несколько копий                         | `3`                                   | Хранит 3 старые версии лога, автоматически создавая ротацию.                   |
-| `size 5m`                               | Максимальный размер файла                       | `5m`                                  | При достижении 5 МБ создаётся новая версия.                                    |
-| `severity dynamic;`                     | Уровень важности                                | `dynamic`, `info`, `warning`, `error` | `dynamic` — уровень управляется командой `rndc trace`.                         |
-| `print-time yes;`                       | Добавлять время в лог                           | `yes`                                 | Помогает при отладке.                                                          |
-| `print-category yes;`                   | Добавлять категорию (queries, resolver и т.д.)  | `yes`                                 | Удобно при анализе.                                                            |
-| `print-severity yes;`                   | Добавлять уровень важности                      | `yes`                                 | В логах будет видно INFO/WARN/ERR.                                             |
-| `};`                                    | Конец описания канала                           | —                                     | Закрывает блок `channel`.                                                      |
-| `category default { default_debug; };`  | Привязка категории к каналу                     | —                                     | Категория `default` (всё подряд) будет писать в канал `default_debug`.         |
-| `category queries { default_debug; };`  | Логирование DNS-запросов                        | —                                     | Очень полезно для анализа активности.                                          |
-| `category resolver { default_debug; };` | Логирование резолвера                           | —                                     | Показывает, как BIND обрабатывает рекурсивные запросы.                         |
-| `};`                                    | Конец секции logging                            | —                                     | Завершение блока.                                                              |
-
-</details>
-
-<details>
-<summary>Секция acl named.conf.acl</summary>
+Пример прмяой зоны
 
 ```bash
-acl "trusted" {
-    127.0.0.1;
-    192.168.122.0/24;
-};
-
-options {
-    allow-query { trusted; };
-    allow-recursion { trusted; };
-};
-```
-
-| Строка                          | Значение                        | Пояснение                               |
-| ------------------------------- | ------------------------------- | --------------------------------------- |
-| `acl "trusted" {`               | Объявление списка доверенных IP | Имя списка — `"trusted"`.               |
-| `127.0.0.1;`                    | Локальный хост                  | Разрешает DNS-доступ с localhost.       |
-| `192.168.122.0/24;`             | Вся подсеть                     | Разрешает DNS-доступ из локальной сети. |
-| `};`                            | Конец ACL                       | Закрывает список IP.                    |
-| `allow-query { trusted; };`     | Кто может делать DNS-запросы    | Только IP из ACL `"trusted"`.           |
-| `allow-recursion { trusted; };` | Кто может пользоваться кэшем    | Тоже только доверенные.                 |
-
-</details>
-
-<details>
-<summary>Секция локальных зон named.conf.local</summary>
-
-```bash
-zone "example.local" IN {
+zone "domentest" {
     type master;
-    file "zones/db.example.local";
-    allow-update { none; };
+    file "zone/domentest.db";
 };
 
-zone "122.168.192.in-addr.arpa" IN {
+```
+
+Пример обратной зоны
+
+```bash
+zone "11.168.192.in-addr.arpa" {
     type master;
-    file "zones/db.192.168.122";
-    allow-update { none; };
+    file "zone/100.168.192.in-addr.arpa";
 };
-```
 
-| Строка                                 | Значение                    | Пояснение                              |
-| -------------------------------------- | --------------------------- | -------------------------------------- |
-| `zone "example.local" IN {`            | Начало описания прямой зоны | DNS-зона `example.local`.              |
-| `type master;`                         | Тип зоны                    | Сервер хранит оригинальные данные.     |
-| `file "zones/db.example.local";`       | Путь к файлу зоны           | Относительно `directory` из `options`. |
-| `allow-update { none; };`              | Динамические обновления     | Отключены (безопасно по умолчанию).    |
-| `};`                                   | Конец зоны                  | Закрытие блока.                        |
-| `zone "122.168.192.in-addr.arpa" IN {` | Начало обратной зоны        | Для IP-сети 192.168.122.0/24.          |
-| `file "zones/db.192.168.122";`         | Файл обратной зоны          | PTR-записи IP → имя.                   |
+```
 
 </details>
 
 <details>
-<summary>Создание прямых и обраных зон</summary>
+<summary>Создание файлов зон</summary>
 
-Назовем прямую зону db.example.local к примеру
+Берем шаблоны с localhost и 127.in-addr.arpa и назначаем владельца
 
 ```bash
-$TTL 86400
-@   IN  SOA ns1.example.local. admin.example.local. (
-        2025110101 ; serial
-        3600       ; refresh
-        1800       ; retry
-        604800     ; expire
-        86400 )    ; minimum
+cp /etc/bind/zone/{localhost,domaintest.db}
+cp /etc/bind/zone/{127.in-addr.arpa,100.168.192.in-addr.arpa}
 
-    IN  NS  ns1.example.local.
-ns1 IN  A   192.168.122.10
-www IN  A   192.168.122.20
-mail IN  A   192.168.122.30
-@   IN  MX  10 mail.example.local.
+chown named:named /etc/bind/zone/domaintest.db
+chown named:named /etc/bind/zone/100.168.192.in-addr.arpa
 ```
 
-| Строка                                           | Значение                         | Пояснение                                                             |
-| ------------------------------------------------ | -------------------------------- | --------------------------------------------------------------------- |
-| `$TTL 86400`                                     | Time To Live                     | TTL 1 день — время кэширования записей.                               |
-| `@`                                              | Текущий домен (`example.local.`) | Символ `@` — замена имени зоны.                                       |
-| `IN SOA ns1.example.local. admin.example.local.` | Начало записи SOA                | Указывает основной DNS и e-mail администратора (точка вместо `@`).    |
-| `2025110101`                                     | Серийный номер                   | Обновляется при каждом изменении.                                     |
-| `3600`                                           | Refresh                          | Вторичные серверы проверяют обновления каждые 1 ч.                    |
-| `1800`                                           | Retry                            | Если не получилось — повтор через 30 мин.                             |
-| `604800`                                         | Expire                           | Через неделю вторичный сервер “забудет” зону, если мастер недоступен. |
-| `86400`                                          | Minimum                          | Минимальное TTL для отрицательных ответов.                            |
-| `IN NS ns1.example.local.`                       | Сервер имён для зоны             | Основной NS.                                                          |
-| `ns1 IN A 192.168.122.10`                        | Адрес DNS-сервера                | ns1.example.local → 192.168.122.10                                    |
-| `www IN A 192.168.122.20`                        | Веб-сервер                       | [www.example.local](http://www.example.local) → 192.168.122.20        |
-| `mail IN A 192.168.122.30`                       | Почтовый сервер                  | mail.example.local → 192.168.122.30                                   |
-| `@ IN MX 10 mail.example.local.`                 | Почтовая запись                  | Приоритет 10, сервер `mail.example.local`.                            |
-
-Обратная зона - db.192.168.122
+Шаблон файла зоны
 
 ```bash
-$TTL 86400
-@   IN  SOA ns1.example.local. admin.example.local. (
-        2025110101 ; serial
-        3600
-        1800
-        604800
-        86400 )
+$TTL <TTL_VALUE>              # Время жизни записей, например: 1D = 1 день
+@   IN  SOA <PRIMARY_DNS>.<DOMAIN>. <ADMIN_EMAIL>. (
+        <SERIAL_NUMBER>      ; Серийный номер зоны, формат YYYYMMDDnn
+        <REFRESH>            ; Интервал обновления для slave (например: 1H)
+        <RETRY>              ; Интервал повторной попытки при ошибке (например: 15M)
+        <EXPIRE>             ; Время истечения у slave (например: 1W)
+        <MINIMUM> )          ; Минимальное TTL для отрицательных ответов (например: 1D)
 
-    IN  NS  ns1.example.local.
-10  IN  PTR ns1.example.local.
-20  IN  PTR www.example.local.
-30  IN  PTR mail.example.local.
+    IN  NS  <PRIMARY_DNS>.<DOMAIN>.   # Основной DNS-сервер зоны
+
+<HOSTNAME_1>  IN  A  <IP_ADDRESS_1>
+<HOSTNAME_2>  IN  A  <IP_ADDRESS_2>
+... (добавляйте по необходимости)
+
+<IP_LAST_OCTET>  IN  PTR  <HOSTNAME>.<DOMAIN>.
+
 ```
 
-| Строка                                             | Значение        | Пояснение                                                          |
-| -------------------------------------------------- | --------------- | ------------------------------------------------------------------ |
-| `$TTL 86400`                                       | TTL записей     | 1 день.                                                            |
-| `@ IN SOA ns1.example.local. admin.example.local.` | Начало зоны     | Та же структура, что и в прямой зоне.                              |
-| `2025110101`                                       | Серийный номер  | Номер версии зоны.                                                 |
-| `IN NS ns1.example.local.`                         | Сервер имён     | Авторитетный сервер для обратной зоны.                             |
-| `10 IN PTR ns1.example.local.`                     | Обратная запись | IP 192.168.122.10 → ns1.example.local.                             |
-| `20 IN PTR www.example.local.`                     | Обратная запись | IP 192.168.122.20 → [www.example.local](http://www.example.local). |
-| `30 IN PTR mail.example.local.`                    | Обратная запись | IP 192.168.122.30 → mail.example.local.                            |
-
-
-</details>
-
-</details>
-
-
-Для создания DNS-сервера в ALT Linux необходимо установить пакет BIND, создать и настроить его конфигурационные файлы.
-В главном файле указываются каталог зон, сетевые интерфейсы и разрешённые клиенты, а также включается рекурсия и задаются внешние форвардеры.
-Затем описываются зоны — основная и при необходимости обратная, после чего создаются соответствующие файлы зон с записями доменных имён и IP-адресов.
-По завершении настройки проверяется корректность конфигурации, после чего служба named запускается и включается в автозагрузку.
-
-<details>
-<summary>Проверка</summary>
-
-Структура директорий
+Прямая зона
 
 ```bash
-/etc/
- └── named.conf
- └── named/
-      ├── named.conf.acl
-      ├── named.conf.log
-      ├── named.conf.local
-      └── zones/
-           ├── db.example.local
-           └── db.192.168.122
-/var/log/named/
-/var/named/
+$TTL 1D
+@   IN  SOA dns.domaintest. root.domaintest. (
+        20251217
+        1H
+        15M
+        1W
+        1D )
+
+    IN  NS  dns.domaintest.
+
+dns IN  A   192.168.100.50
+
 ```
 
-| Действие                                              | Команда                                                                         | Назначение                                                                           |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Проверка синтаксиса основного конфигурационного файла | `sudo named-checkconf`                                                          | Проверяет правильность написания и структуру всех файлов конфигурации BIND.          |
-| Проверка прямой зоны                                  | `sudo named-checkzone example.local /var/named/zones/db.example.local`          | Проверяет корректность записей в файле прямой зоны (соответствие имён и IP-адресов). |
-| Проверка обратной зоны                                | `sudo named-checkzone 122.168.192.in-addr.arpa /var/named/zones/db.192.168.122` | Проверяет правильность обратных записей (соответствие IP-адресов именам).            |
-| Проверка запуска службы                               | `sudo systemctl start named`                                                    | Запускает DNS-сервер для тестирования.                                               |
-| Проверка состояния службы                             | `sudo systemctl status named`                                                   | Отображает текущее состояние и возможные ошибки при запуске.                         |
-| Проверка ответов DNS                                  | `dig @127.0.0.1 www.example.local`                                              | Проверяет, отвечает ли сервер на запросы и правильно ли разрешает имена.             |
-| Проверка обратного разрешения                         | `dig -x 192.168.122.20`                                                         | Тестирует корректность работы обратной зоны (PTR-записи).                            |
-
-
-</details>
-
-<details>
-<summary>Экспресс-настройка</summary>
-
-В /etc/named.conf 
+Обратная зона зона
 
 ```bash
-options {
-    directory "/var/named";
-    listen-on port 53 { any; };
-    allow-query { any; };
-    recursion yes;
-    forwarders { 8.8.8.8; 1.1.1.1; };
-    dnssec-validation auto;
-};
+$TTL 1D
+@   IN  SOA dns.domaintest. root.domaintest. (
+        20251217
+        1H
+        15M
+        1W
+        1D )
 
-zone "example.local" IN {
-    type master;
-    file "db.example.local";
-};
-```
+    IN  NS  dns.domaintest.
+10  IN  PTR dns.domaintest.
 
-В /var/named/db.example.local
-
-```bash
-$TTL 86400
-@   IN  SOA ns1.example.local. admin.example.local. (
-        1        ; serial
-        3600     ; refresh
-        1800     ; retry
-        604800   ; expire
-        86400 )  ; minimum
-
-    IN  NS  ns1.example.local.
 ```
 
 </details>
+
+После настройки всех конфигов нужно проверить на ошибки и указать DNS-настройки системы в /etc/resolv.conf
+
+```bash
+nameserver 127.0.0.1
+search domaintest
+```
+
+```bash
+named-checkconf -z
+```
+
+Если всё правильно, запускаем и добавляем в автозагрузку
+
+```bash
+systemctl enable --now bind
+```
 
 </details>
 
@@ -1607,6 +1486,11 @@ P.S. сертификаты должны иметь расширение ".crt"
 <details>
 <summary>FreeIPA</summary>
 
+
+## ⚠️ Важно!
+
+ В файле hostname не должно быть заглавных букв!
+
 <details>
 <summary>С интегрированным DNS</summary>
 
@@ -2276,6 +2160,356 @@ systemctl restart nginx
 ```bash
 apt-get install –y yandex-browser-stable
 ```
+
+</details>
+
+<details>
+<summary>Zabbix</summary>
+
+<details>
+<summary>MariaDB</summary>
+
+Устанавливаем СУБД
+
+```bash
+apt-get install mariadb-server zabbix-server-mysql fping
+systemctl enable --now mysqld
+```
+
+Создаем БД Zabbix и пользователя
+
+```bash
+mysql -uroot -p
+Enter password: # можно пропустить
+MariaDB [(none)]> create database zabbix character set utf8 collate utf8_bin;
+MariaDB [(none)]> grant all privileges on zabbix.* to zabbix@localhost identified by '<пароль>';
+MariaDB [(none)]> quit;
+```
+
+Добавляем в БД данные для веб интерфейса (важно соблюдать порядок ввода команд)
+
+```bash
+mysql -uzabbix -p<пароль> zabbix < /usr/share/doc/zabbix-common-database-mysql-*/schema.sql
+mysql -uzabbix -p<пароль> zabbix < /usr/share/doc/zabbix-common-database-mysql-*/images.sql 
+mysql -uzabbix -p<пароль> zabbix < /usr/share/doc/zabbix-common-database-mysql-*/data.sql
+```
+
+Устанавливаем apache2
+
+```bash
+apt-get install apache2 apache2-mod_php8.2
+systemctl enable --now httpd2
+apt-get install php8.2 php8.2-mbstring php8.2-sockets php8.2-gd php8.2-xmlreader php8.2-mysqlnd-mysqli php8.2-ldap php8.2-openssl
+```
+
+Меняем опции в <code>etc/php/8.2/apache2-mod_php/php.ini</code>
+
+```bash
+memory_limit = 256M
+post_max_size = 32M
+max_execution_time = 600
+max_input_time = 600
+date.timezone = Europe/Moscow (регион вписать свой)
+always_populate_raw_post_data = -1
+```
+
+Перезагружаем
+
+```bash
+systemctl restart httpd2
+```
+Редактируем <code>/etc/zabbix/zabbix_server.conf</code>
+
+```bash
+DBHost=localhost
+DBName=zabbix
+DBUser=zabbix
+DBPassword=Пароль
+```
+
+```bash
+systemctl enable --now zabbix_mysql
+```
+
+Установка web интерфейса
+
+```bash
+apt-get install zabbix-phpfrontend-apache2 zabbix-phpfrontend-php8.2
+ln -s /etc/httpd2/conf/addon.d/A.zabbix.conf /etc/httpd2/conf/extra-enabled/
+systemctl restart httpd2
+chown apache2:apache2 /var/www/webapps/zabbix/ui/conf
+```
+
+Заходим на сайт <ip сервера>/zabbix и подключаемся к БД, вводим пароль от БД
+
+Логин и пароль для входа по умолчанию
+
+```
+Логин: Admin
+Пароль: zabbix
+```
+
+</details>
+
+<details>
+<summary>PostgreSQL</summary>
+
+
+Устанавливаем СУБД
+
+```bash
+apt-get install postgresql16-server zabbix-server-pgsql fping
+```
+
+Создаем системные базы данных и включаем в автозапуск
+
+```bash
+/etc/init.d/postgresql initdb
+systemctl enable --now postgresql
+```
+
+Создаем БД Zabbix и пользователя
+
+```bash
+su - postgres -s /bin/sh -c 'createuser --no-superuser --no-createdb --no-createrole --encrypted --pwprompt zabbix'
+Введите пароль для новой роли: 
+Повторите его:
+su - postgres -s /bin/sh -c 'createdb -O zabbix zabbix'
+```
+
+Добавляем в БД данные для веб интерфейса (важно соблюдать порядок ввода команд)
+
+```bash
+su - postgres -s /bin/sh -c 'psql -U zabbix -f /usr/share/doc/zabbix-common-database-pgsql-*/schema.sql zabbix'
+su - postgres -s /bin/sh -c 'psql -U zabbix -f /usr/share/doc/zabbix-common-database-pgsql-*/images.sql zabbix'
+su - postgres -s /bin/sh -c 'psql -U zabbix -f /usr/share/doc/zabbix-common-database-pgsql-*/data.sql zabbix'
+```
+
+Устанавливаем apache2
+
+```bash
+apt-get install apache2 apache2-mod_php8.2
+systemctl enable --now httpd2
+apt-get install php8.2 php8.2-mbstring php8.2-sockets php8.2-gd php8.2-xmlreader php8.2-pgsql php8.2-ldap php8.2-openssl
+```
+
+Меняем опции в <code>etc/php/8.2/apache2-mod_php/php.ini</code>
+
+```bash
+memory_limit = 256M
+post_max_size = 32M
+max_execution_time = 600
+max_input_time = 600
+date.timezone = Europe/Moscow (регион вписать свой)
+always_populate_raw_post_data = -1
+```
+
+Перезагружаем
+
+```bash
+systemctl restart httpd2
+```
+Редактируем <code>/etc/zabbix/zabbix_server.conf</code>
+
+```bash
+DBHost=localhost
+DBName=zabbix
+DBUser=zabbix
+DBPassword=Пароль
+```
+
+```bash
+systemctl enable --now zabbix_mysql
+```
+
+Установка web интерфейса
+
+```bash
+apt-get install zabbix-phpfrontend-apache2 zabbix-phpfrontend-php8.2
+ln -s /etc/httpd2/conf/addon.d/A.zabbix.conf /etc/httpd2/conf/extra-enabled/
+systemctl restart httpd2
+chown apache2:apache2 /var/www/webapps/zabbix/ui/conf
+```
+
+Заходим на сайт <ip сервера>/zabbix и подключаемся к БД, вводим пароль от БД
+
+Логин и пароль для входа по умолчанию
+
+```
+Логин: Admin
+Пароль: zabbix
+```
+
+</details>
+
+<details>
+<summary>Подключение клиента</summary>
+
+Устанавливаем
+
+```bash
+apt-get install zabbix-agent
+```
+
+Редактируем конфиг
+
+```bash
+nano /etc/zabbix/zabbix_agentd.conf
+```
+
+```bash
+Server=<ip сервера>
+ServerActive=<ip сервера>
+Hostname=<назв комп>
+```
+
+Заходим на сайт, добавляем узел сети
+
+* Мониторинг -> Узел сети
+
+* Создаем узел сети
+
+* В шаблонах ищем Templates, нажимаем поиск и выбираем Linux by Zabbix agent
+
+* Добавляем группу Discovered hosts
+
+* Вписываем IP компьютера
+
+
+</details>
+
+</details>
+
+<details>
+<summary>Fail2ban</summary>
+
+Fail2ban — это утилита для защиты серверов от атак методом перебора 
+
+Установка
+
+```bash
+apt-get install fail2ban python3-module-systemd
+```
+
+ALT Linux использует systemd, она не пишет текстовые логи в /var/log, поэтому для переключения на systemd нужно установить пакет python3-module-systemd  
+
+В <code>/etc/fail2ban/jail.conf</code> в секции INCLUDES заменяем
+
+```bash
+before = paths-altlinux.conf
+```
+
+на
+
+```bash
+before = paths-altlinux-systemd.conf
+```
+
+Структура fail2ban
+
+```bash
+/etc/fail2ban/
+├── fail2ban.conf          # Настройки демона
+├── jail.conf             # Базовые настройки
+├── jail.d
+│    └── sshd.conf        # ВАШ КОНФИГ ХРАНИТСЯ ТУТ!
+├── filter.d/
+│   └── sshd.conf         # Фильтр для анализа логов SSH
+└── action.d/
+    └── iptables.conf     # Действие: блокировка через iptables
+```
+
+### Минимальная настройка 
+
+Представим, нам нужно указать порт ssh, поставить таймер бана (на 10 секунд) и указать количество попыток (3 попытки)
+
+Создаем файл sshd.conf в директории jail.d
+
+```bash
+nano /etc/fail2ban/jail.d/sshd.conf
+```
+
+В нём пишем следующее
+
+```bash
+[sshd]
+enabled = true
+port = 22
+maxretry = 3
+bantime = 10
+findtime = 60 # время попыток ввода
+```
+
+Перезагружаем fail2ban и добавляем в автозапуск
+
+```bash
+systemctl restart fail2ban
+systemctl enable fail2ban
+```
+
+</details>
+
+<details>
+<summary>moodle</summary>
+
+### Настройка сервера
+
+Устанавливаем 
+
+```bash
+apt-get install moodle moodle-apache2 moodle-local-mysql
+systemctl enable --now mysqld
+```
+
+Создаем базу данных
+
+```bash
+mysql -u root
+CREATE DATABASE namedb DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,CREATE TEMPORARY TABLES,DROP,INDEX,ALTER ON moodledb.* TO moodle@localhost IDENTIFIED BY '<пароль>';
+quit;
+```
+
+Загружаем исходники
+
+```bash
+cd /opt
+git clone git://git.moodle.org/moodle.git
+cd /opt/moodle
+git branch -a
+git checkout <moodle_версия_stable>
+```
+
+Копируем в папку
+
+```bash
+cp -R /opt/moodle /var/www/html/
+```
+
+Выдаем все нужные права
+
+```bash
+mkdir /var/moodledata
+chown -R apache2:webmaster /var/moodledata
+chmod -R 777 /var/moodledata
+chmod ugoa=rwx /var/moodledata
+chmod -R 0755 /var/www/html/moodle
+```
+Теперь нужно раскомментировать и изменить параметр в <code>etc/php/8.2/apache2-mod_php/php.ini</code>
+
+```bash
+max_input_vars = 10000
+```
+
+Перезагружаем apache
+
+```bash
+systemctl restart httpd2
+```
+
+### Настройка на клиенте
+
+Заходим в бразуер, пишем <ip сервера/moodle>
 
 </details>
 
@@ -3105,6 +3339,44 @@ source ~/.bashrc
 ---
 
 <details>
+<summary> 🇫 Fedora</summary>
+
+<details>
+<summary>🛠️ Постустановка ОС</summary>
+
+При попытке обновлении системы, вы можете столкнуться с ошибкой 403 fedora-cisco-openh264. Это набор кодеков от Cisco. 
+
+Лицензия Cisco не позволяет Fedora его распространять. Удаляем «заблокированного друга» и подключаем свободный RPM Fusion
+
+Удаление репозитория openh264
+
+```bash
+sudo dnf5 config-manager setopt fedora-cisco-openh264.enabled=0
+sudo dnf5 remove openh264 mozilla-openh264 gstreamer1-plugin-openh264
+```
+
+Установка RPM Fusion
+
+```bash
+sudo dnf install --nogpgcheck \
+https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+```
+
+Установка кодеков для браузеров
+
+```bash
+sudo dnf install ffmpeg-libs --allowerasing
+```
+
+</details>
+
+
+</details>
+
+---
+
+<details>
 <summary>🔄 Rocky Linux</summary>
 
 Пока пусто :(
@@ -3391,13 +3663,45 @@ VyOS - [Скачать](https://vyos.net/get/)
 
 ---
 ## 📂 Полезные штучки
-<details>
-<summary>Автоматизация настройки статики</summary>
 
 <details>
-<summary>ALT Linux</summary>
+<summary>Таблица CIDR </summary>
 
-</details>
+| CIDR | Пример диапазона IP | Обратная маска | Маска | Адресов | Хостов |
+|------|------------------|----------|------|-----------|-------|
+| /32 | 192.168.1.1 | 0.0.0.0 | 255.255.255.255 | 1 | 1 |
+| /31 | 192.168.1.0-1 | 0.0.0.1 | 255.255.255.254 | 2 | 2 |
+| /30 | 192.168.1.0-3 | 0.0.0.3 | 255.255.255.252 | 4 | 2 |
+| /29 | 192.168.1.0-7 | 0.0.0.7 | 255.255.255.248 | 8 | 6 |
+| /28 | 192.168.1.0-15 | 0.0.0.15 | 255.255.255.240 | 16 | 14 |
+| /27 | 192.168.1.0-31 | 0.0.0.31 | 255.255.255.224 | 32 | 30 |
+| /26 | 192.168.1.0-63 | 0.0.0.63 | 255.255.255.192 | 64 | 62 |
+| /25 | 192.168.1.0-127 | 0.0.0.127 | 255.255.255.128 | 128 | 126 |
+| /24 | 192.168.1.0-255 | 0.0.0.255 | 255.255.255.0 | 256 | 254 |
+| /23 | 192.168.0.0-1.255 | 0.0.1.255 | 255.255.254.0 | 512 | 510 |
+| /22 | 192.168.0.0-3.255 | 0.0.3.255 | 255.255.252.0 | 1024 | 1022 |
+| /21 | 192.168.0.0-7.255 | 0.0.7.255 | 255.255.248.0 | 2048 | 2046 |
+| /20 | 192.168.0.0-15.255 | 0.0.15.255 | 255.255.240.0 | 4096 | 4094 |
+| /19 | 192.168.0.0-31.255 | 0.0.31.255 | 255.255.224.0 | 8192 | 8190 |
+| /18 | 192.168.0.0-63.255 | 0.0.63.255 | 255.255.192.0 | 16384 | 16382 |
+| /17 | 192.168.0.0-127.255 | 0.0.127.255 | 255.255.128.0 | 32768 | 32766 |
+| /16 | 192.168.0.0-255.255 | 0.0.255.255 | 255.255.0.0 | 65536 | 65534 |
+| /15 | 192.168.0.0-1.255.255 | 0.1.255.255 | 255.254.0.0 | 131072 | 131070 |
+| /14 | 192.168.0.0-3.255.255 | 0.3.255.255 | 255.252.0.0 | 262144 | 262142 |
+| /13 | 192.168.0.0-7.255.255 | 0.7.255.255 | 255.248.0.0 | 524288 | 524286 |
+| /12 | 192.168.0.0-15.255.255 | 0.15.255.255 | 255.240.0.0 | 1048576 | 1048574 |
+| /11 | 192.168.0.0-31.255.255 | 0.31.255.255 | 255.224.0.0 | 2097152 | 2097150 |
+| /10 | 192.168.0.0-63.255.255 | 0.63.255.255 | 255.192.0.0 | 4194304 | 4194302 |
+| /9 | 192.168.0.0-127.255.255 | 0.127.255.255 | 255.128.0.0 | 8388608 | 8388606 |
+| /8 | 10.0.0.0-255.255.255 | 0.255.255.255 | 255.0.0.0 | 16777216 | 16777214 |
+| /7 | 10.0.0.0-11.255.255.255 | 1.255.255.255 | 254.0.0.0 | 33554432 | 33554430 |
+| /6 | 10.0.0.0-13.255.255.255 | 3.255.255.255 | 252.0.0.0 | 67108864 | 67108862 |
+| /5 | 10.0.0.0-17.255.255.255 | 7.255.255.255 | 248.0.0.0 | 134217728 | 134217726 |
+| /4 | 10.0.0.0-25.255.255.255 | 15.255.255.255 | 240.0.0.0 | 268435456 | 268435454 |
+| /3 | 10.0.0.0-41.255.255.255 | 31.255.255.255 | 224.0.0.0 | 536870912 | 536870910 |
+| /2 | 10.0.0.0-73.255.255.255 | 63.255.255.255 | 192.0.0.0 | 1073741824 | 1073741822 |
+| /1 | 0.0.0.0-127.255.255.255 | 127.255.255.255 | 128.0.0.0 | 2147483648 | 2147483646 |
+| /0 | 0.0.0.0-255.255.255.255 | 255.255.255.255 | 0.0.0.0 | 4294967296 | 4294967294 |
 
 </details>
 
@@ -3497,6 +3801,8 @@ VyOS - [Скачать](https://vyos.net/get/)
 
 
 </details>
+
+[Калькулятор IP](https://ipfix.ru/tools/ip-calculator)
 
 ---
 

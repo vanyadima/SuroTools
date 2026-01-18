@@ -608,6 +608,8 @@ recursion yes;
 
 Создание локальных зон
 
+ВАЖНО! Имя зоны в конфигурации BIND (в блоке zone "...") должно совпадать с именем домена, указанным в SOA-записи этого файла зоны.
+
 ```bash
 zone "ZONE_NAME" {                  # имя зоны (например: "domentest" или "100.168.192.in-addr.arpa")
     type TYPE;                       # тип зоны: master или slave
@@ -650,57 +652,96 @@ chown named:named /etc/bind/zone/domaintest.db
 chown named:named /etc/bind/zone/100.168.192.in-addr.arpa
 ```
 
-Шаблон файла зоны
+Шаблон файла прямой зоны
 
 ```bash
-$TTL <TTL_VALUE>              # Время жизни записей, например: 1D = 1 день
-@   IN  SOA <PRIMARY_DNS>.<DOMAIN>. <ADMIN_EMAIL>. (
-        <SERIAL_NUMBER>      ; Серийный номер зоны, формат YYYYMMDDnn
-        <REFRESH>            ; Интервал обновления для slave (например: 1H)
-        <RETRY>              ; Интервал повторной попытки при ошибке (например: 15M)
-        <EXPIRE>             ; Время истечения у slave (например: 1W)
-        <MINIMUM> )          ; Минимальное TTL для отрицательных ответов (например: 1D)
+; Зона example.com
+; Последнее изменение: 2026-01-18
+$TTL 1d          ; Значение по умолчанию для всех записей без явного TTL (1 день — хороший современный выбор)
 
-    IN  NS  <PRIMARY_DNS>.<DOMAIN>.   # Основной DNS-сервер зоны
+@               IN SOA  ns1.example.com. admin.example.com. (
+                2026011801  ; Серийный номер — формат ГГГГММДДnn (сегодня + 01)
+                1h          ; Refresh — как часто slave проверяет изменения
+                15m         ; Retry    — через сколько пытаться снова при ошибке
+                1w          ; Expire   — когда slave перестанет отвечать, если мастер недоступен
+                1d          ; Minimum / Negative cache TTL — для NXDOMAIN и других отрицательных ответов
+)
 
-<HOSTNAME_1>  IN  A  <IP_ADDRESS_1>
-<HOSTNAME_2>  IN  A  <IP_ADDRESS_2>
-... (добавляйте по необходимости)
+; Серверы имён (NS-записи) — минимум один, лучше 2+
+                IN NS   ns1.example.com.
+                IN NS   ns2.example.com.   ; желательно второй сервер (в идеале — в другой сети)
 
-<IP_LAST_OCTET>  IN  PTR  <HOSTNAME>.<DOMAIN>.
+; Основные адреса
+ns1             IN A    203.0.113.10
+ns2             IN A    198.51.100.53
+
+@               IN A    203.0.113.5        ; адрес сайта по умолчанию (www тоже часто добавляют)
+www             IN A    203.0.113.5
+mail            IN A    203.0.113.10
+
+; Пример MX (почта)
+                IN MX 10 mail.example.com.
+
+; Примеры других полезных записей (раскомментируйте по необходимости)
+; ftp           IN A    203.0.113.5
+; autodiscover  IN CNAME mail.example.com.
+; _dmarc        IN TXT   "v=DMARC1; p=none; rua=mailto:dmarc-reports@example.com;"
+; example.com.  IN TXT   "v=spf1 mx a -all"
 
 ```
 
-Прямая зона
+Шаблон файла обратной зоны
+
+```bash
+; Обратная зона для подсети 203.0.113.0/24
+$TTL 1d
+
+@               IN SOA  ns1.example.com. admin.example.com. (
+                2026011801  ; YYYYMMDDnn
+                1h
+                15m
+                1w
+                1d )
+
+                IN NS   ns1.example.com.
+                IN NS   ns2.example.com.
+
+; PTR-записи — пишем только последнюю часть IP (хвост октета)
+10              IN PTR  ns1.example.com.
+5               IN PTR  example.com.
+5               IN PTR  www.example.com.     ; один IP может иметь несколько PTR (хотя не всегда полезно)
+53              IN PTR  ns2.example.com.
+```
+
+Пример прямой зоны
 
 ```bash
 $TTL 1D
-@   IN  SOA dns.domaintest. root.domaintest. (
-        20251217
-        1H
-        15M
-        1W
-        1D )
+@       IN SOA    dns.domaintest. root.domaintest. (
+                2025011801  ; serial — формат YYYYMMDDnn, увеличь при изменениях
+                1H          ; refresh
+                15M         ; retry
+                1W          ; expire
+                1D )        ; minimum / negative cache TTL
 
-    IN  NS  dns.domaintest.
-
-dns IN  A   192.168.100.50
+@       IN NS     dns.domaintest.
+dns     IN A      192.168.100.50
 
 ```
 
-Обратная зона зона
+Пример обратной зоны
 
 ```bash
 $TTL 1D
-@   IN  SOA dns.domaintest. root.domaintest. (
-        20251217
-        1H
-        15M
-        1W
-        1D )
+@       IN SOA    dns.domaintest. root.domaintest. (
+                2025011801  ; serial — синхронизирован с forward-зоной
+                1H          ; refresh
+                15M         ; retry
+                1W          ; expire
+                1D )        ; minimum
 
-    IN  NS  dns.domaintest.
-10  IN  PTR dns.domaintest.
+@       IN NS     dns.domaintest.
+50      IN PTR    dns.domaintest.
 
 ```
 
@@ -715,6 +756,8 @@ search domaintest
 
 ```bash
 named-checkconf -z
+named-checkzone domaintest /etc/bind/db.domaintest
+named-checkzone 100.168.192.in-addr.arpa /etc/bind/db.192.168.100
 ```
 
 Если всё правильно, запускаем и добавляем в автозагрузку

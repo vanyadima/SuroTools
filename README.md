@@ -7,6 +7,17 @@
 > 
 > ⚙️ Часть конфигураций была разработана мной, другие - собраны из открытых источников, проверены и адаптированы для практического использования.
 
+<p>
+  <a href="https://www.altlinux.org/"><img src="https://img.shields.io/badge/ALT%20Linux-005FAD?logo=altlinux&logoColor=fff" alt="ALT"></a>
+  <a href="https://archlinux.org/"><img src="https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff" alt="Arch"></a>
+  <a href="https://www.debian.org/"><img src="https://img.shields.io/badge/Debian-A81D33?logo=debian&logoColor=fff" alt="Debian"></a>
+  <a href="https://fedoraproject.org/"><img src="https://img.shields.io/badge/Fedora-51A2DA?logo=fedora&logoColor=fff" alt="Fedora"></a>
+  <a href="https://almalinux.org/"><img src="https://img.shields.io/badge/AlmaLinux-000?logo=almalinux&logoColor=fff" alt="Alma"></a>
+  <a href="https://www.centos.org/"><img src="https://img.shields.io/badge/CentOS-A14F8C?logo=centos&logoColor=white" alt="CentOS"></a>
+  <a href="https://rockylinux.org/"><img src="https://img.shields.io/badge/Rocky%20Linux-10B981?logo=rockylinux&logoColor=fff" alt="Rocky"></a>
+  <a href="https://vyos.io/"><img src="https://img.shields.io/badge/VyOS-00C4FF?logo=vyos&logoColor=fff" alt="VyOS"></a>
+  <a href="https://nixos.org/"><img src="https://img.shields.io/badge/NixOS-5277C3?logo=nixos&logoColor=fff" alt="NixOS"></a>
+</p>
 
 ---
 

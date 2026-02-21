@@ -1,5 +1,5 @@
 <p align="center">
-<img src="logo.svg" width="200"/>
+<img src="logo.svg" width="400"/>
 </p>
 
 NixOS - это Linux-дистрибутив, построенный вокруг очень необычной идеи:
